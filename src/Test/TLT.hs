@@ -25,11 +25,11 @@ module Test.TLT (
   -- * Writing tests
   Assertion,
   -- ** `TLT` commands
-  (~:), (~::), (~::-),
+  inGroup, (~:), (~::), (~::-),
   -- ** Assertions
   (!==),  (!/=),  (!<),  (!>),  (!<=),  (!>=),
   (!==-), (!/=-), (!<-), (!>-), (!<=-), (!>=-),
-  emptyP, empty,
+  empty, nonempty, emptyP, nonemptyP,
   -- ** Building new assertions
   liftAssertion2Pure, assertion2PtoM, liftAssertion2M,
   liftAssertionPure, assertionPtoM, liftAssertionM
@@ -38,7 +38,7 @@ module Test.TLT (
 import Control.Monad
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Class
-import Control.Monad.Trans.State.Lazy
+import Control.Monad.Trans.State.Strict
 import System.Console.ANSI
 import System.Exit
 
@@ -109,7 +109,7 @@ report trs = let fails = totalFailCount trs
                   putStrLn ":"
                   forM_ r $ \ f -> putStrLn $ ind ++ "- " ++ formatFail f
             Group s _ _ trs' -> do
-              putStrLn $ ind ++ "  - " ++ s ++ ":"
+              putStrLn $ ind ++ "- " ++ s ++ ":"
               report' ("  " ++ ind) trs'
 
 greenPass = do
@@ -134,28 +134,36 @@ redFail = do
 
 -- |Accumulator for test results, in the style of a simplified Huet's
 -- zipper which only ever adds to the end of the structure.
-data TRBuf = Buf TRBuf Int String [TestResult] | Top Int [TestResult]
+data TRBuf = Buf TRBuf Int Int String [TestResult] | Top Int Int [TestResult]
 
 -- |Add a single test result to a `TRBuf`.
 addResult :: TRBuf -> TestResult -> TRBuf
-addResult (Top n trs) tr = Top (n + failCount tr) $ tr : trs
-addResult (Buf up n s trs) tr = Buf up (n + failCount tr) s $ tr : trs
+addResult (Top tc fc trs) tr =
+  Top (tc + testCount tr) (fc + failCount tr) $ tr : trs
+addResult (Buf up tc fc s trs) tr =
+  Buf up (tc + testCount tr) (fc + failCount tr) s $ tr : trs
+
+-- |Convert the topmost group of a bottom-up `TRBuf` into a completed
+-- top-down report about the group.
+currentGroup :: TRBuf -> TestResult
+currentGroup (Buf up tc fc s trs) = Group s tc fc (reverse trs)
+
+-- |Derive a new `TRBuf` corresponding to finishing the current group
+-- and continuing to accumulate results into its enclosure.
+popGroup :: TRBuf -> TRBuf
+popGroup trb@(Buf acc _ _ _ _) = addResult acc $ currentGroup trb
 
 -- |Convert a `TRBuf` into a list of top-down `TestResult`s.
 closeTRBuf :: TRBuf -> [TestResult]
-closeTRBuf (Top _ ts) = reverse ts
-closeTRBuf (Buf acc failCount gname gtrs) =
-  closeTRBuf $ closeWith acc $
-    Group gname (length gtrs) failCount $ reverse gtrs
-  where closeWith (Top n ts) g = Top (n + failCount) $ g : ts
-        closeWith (Buf acc n gn gtrs) g = Buf acc (n + failCount) gn $ g : gtrs
+closeTRBuf (Top _ _ ts) = reverse ts
+closeTRBuf b = closeTRBuf $ popGroup b
 
 -- |Monad transformer for TLT tests.  This layer stores the results
 -- from tests as they are executed.
 newtype Monad m => TLT m r = TLT { unwrap :: StateT TRBuf m r }
 
 -- |Using `TLT` as a functor.
-instance (Monad m) => Functor (TLT m) where
+instance Monad m => Functor (TLT m) where
   fmap f (TLT m) = TLT $ do
     v <- m
     return $ f v
@@ -192,8 +200,16 @@ instance MonadIO m => MonadIO (TLT m) where
 tlt :: MonadIO m => TLT m r -> m ()
 tlt (TLT t) = do
   liftIO $ putStrLn "Running tests:"
-  (_, resultsBuf) <- runStateT t $ Top 0 []
+  (_, resultsBuf) <- runStateT t $ Top 0 0 []
   liftIO $ report $ closeTRBuf resultsBuf
+
+inGroup :: Monad m => String -> TLT m () -> TLT m ()
+inGroup name group = do
+  before <- TLT get
+  TLT $ put $ Buf before 0 0 name []
+  group
+  after <- TLT $ get
+  TLT $ put $ popGroup after
 
 {-  Does not work now, but not important to fix immediately.
 
@@ -355,7 +371,8 @@ emptyP :: (Monad m, Foldable t) => t a -> Assertion m
 emptyP = liftAssertionPure null
            (\ _ -> "Expected empty structure but got non-empty")
 
--- |Assert that a structure returned from a computation is empty.
+-- |Assert that a foldable structure (such as a list) returned from a
+-- computation is empty.
 empty :: (Monad m, Foldable t) => m (t a) -> Assertion m
 empty = assertionPtoM emptyP
 
@@ -364,6 +381,7 @@ nonemptyP :: (Monad m, Foldable t) => t a -> Assertion m
 nonemptyP = liftAssertionPure (not . null)
               (\ _ -> "Expected non-empty structure but got empty")
 
--- |Assert that a structure returned from a computation is non-empty.
+-- |Assert that a foldable structure (such as a list) returned from a
+-- computation is non-empty.
 nonempty :: (Monad m, Foldable t) => m (t a) -> Assertion m
 nonempty = assertionPtoM nonemptyP
