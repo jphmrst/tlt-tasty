@@ -250,6 +250,8 @@ tlt (TLT t) = do
   (_, resultsBuf) <- runStateT t $ Top 0 0 []
   liftIO $ report $ closeTRBuf resultsBuf
 
+-- |Organize the tests in the given subcomputation as a separate group
+-- within the test results we will report.
 inGroup :: Monad m => String -> TLT m () -> TLT m ()
 inGroup name group = do
   before <- TLT get
