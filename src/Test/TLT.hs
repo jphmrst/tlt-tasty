@@ -60,28 +60,39 @@ type Assertion m = m [TestFail]
 -- |Hierarchical structure holding the result of running tests,
 -- possibly grouped into tests.
 data TestResult = Test String [TestFail]
-                | Group String Int [TestResult]
+                | Group String Int Int [TestResult]
+                  -- Ints are resp. total tests, failures
 
 -- |Return the number of failed tests reported in a `TestResult`.
 failCount :: TestResult -> Int
 failCount (Test _ []) = 0
 failCount (Test _ _) = 1
-failCount (Group _ n _) = n
+failCount (Group _ _ n _) = n
+
+testCount :: TestResult -> Int
+testCount (Test _ _) = 1
+testCount (Group _ n _ _) = n
 
 totalFailCount :: [TestResult] -> Int
-totalFailCount = foldr (\tr n -> n + failCount tr) 0
+totalFailCount = foldr (+) 0 . map failCount
+
+totalTestCount :: [TestResult] -> Int
+totalTestCount = foldr (+) 0 . map testCount
 
 -- |Report the results of tests.
 report :: [TestResult] -> IO ()
 report trs = let fails = totalFailCount trs
+                 tests = totalTestCount trs
              in do report' "" trs
                    if fails > 0
                      then do putStrLn $
                                "Found " ++ show fails ++ " error"
                                ++ (if fails > 1 then "s" else "")
-                               ++ "; exiting"
+                               ++ " in " ++ show tests ++ " tests; exiting"
                              exitFailure
-                     else return()
+                     else putStrLn $ show tests ++ " test"
+                               ++ (if tests > 1 then "s" else "")
+                               ++ " passing."
   where report' ind trs = forM_ trs $ \ tr -> do
           case tr of
             Test s r -> do
@@ -97,7 +108,7 @@ report trs = let fails = totalFailCount trs
                   redFail
                   putStrLn ":"
                   forM_ r $ \ f -> putStrLn $ ind ++ "- " ++ formatFail f
-            Group s _ trs' -> do
+            Group s _ _ trs' -> do
               putStrLn $ ind ++ "  - " ++ s ++ ":"
               report' ("  " ++ ind) trs'
 
@@ -133,10 +144,11 @@ addResult (Buf up n s trs) tr = Buf up (n + failCount tr) s $ tr : trs
 -- |Convert a `TRBuf` into a list of top-down `TestResult`s.
 closeTRBuf :: TRBuf -> [TestResult]
 closeTRBuf (Top _ ts) = reverse ts
-closeTRBuf (Buf acc count gname gtrs) =
-  closeTRBuf $ closeWith acc $ Group gname count $ reverse gtrs
-  where closeWith (Top n ts) g = Top (n + count) $ g : ts
-        closeWith (Buf acc n gn gtrs) g = Buf acc (n + count) gn $ g : gtrs
+closeTRBuf (Buf acc failCount gname gtrs) =
+  closeTRBuf $ closeWith acc $
+    Group gname (length gtrs) failCount $ reverse gtrs
+  where closeWith (Top n ts) g = Top (n + failCount) $ g : ts
+        closeWith (Buf acc n gn gtrs) g = Buf acc (n + failCount) gn $ g : gtrs
 
 -- |Monad transformer for TLT tests.  This layer stores the results
 -- from tests as they are executed.
@@ -346,3 +358,12 @@ emptyP = liftAssertionPure null
 -- |Assert that a structure returned from a computation is empty.
 empty :: (Monad m, Foldable t) => m (t a) -> Assertion m
 empty = assertionPtoM emptyP
+
+-- |Assert that a pure foldable structure (such as a list) is nonempty.
+nonemptyP :: (Monad m, Foldable t) => t a -> Assertion m
+nonemptyP = liftAssertionPure (not . null)
+              (\ _ -> "Expected non-empty structure but got empty")
+
+-- |Assert that a structure returned from a computation is non-empty.
+nonempty :: (Monad m, Foldable t) => m (t a) -> Assertion m
+nonempty = assertionPtoM nonemptyP
