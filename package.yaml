@@ -24,17 +24,21 @@ dependencies:
 
 library:
   source-dirs: src
+  dependencies:
+  - HUnit
+  - symbol
+  - transformers
 
-executables:
-  TLT-exe:
-    main:                Main.hs
-    source-dirs:         app
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    dependencies:
-    - TLT
+# executables:
+#   TLT-exe:
+#     main:                Main.hs
+#     source-dirs:         app
+#     ghc-options:
+#     - -threaded
+#     - -rtsopts
+#     - -with-rtsopts=-N
+#     dependencies:
+#     - TLT
 
 tests:
   TLT-test:
