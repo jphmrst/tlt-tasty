@@ -1,5 +1,5 @@
 name:                TLT
-version:             0.1.0.0
+version:             0.0.0.1
 github:              "githubuser/TLT"
 license:             BSD3
 author:              "Author name here"
@@ -28,6 +28,7 @@ library:
   - HUnit
   - symbol
   - transformers
+  - ansi-terminal
 
 # executables:
 #   TLT-exe:
