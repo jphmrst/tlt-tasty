@@ -3,10 +3,6 @@ import Test.TLT
 main :: IO ()
 main = do
   tlt test
-  {- runJTMST $ do
-    counts <- testEx1
-    liftIO $ putStrLn $ show counts -}
-  putStrLn "Test run completed"
 
 test :: Monad m => TLT m ()
 test = do

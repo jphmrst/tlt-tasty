@@ -33,6 +33,53 @@ module Test.TLT (
   -- ** Building new assertions
   liftAssertion2Pure, assertion2PtoM, liftAssertion2M,
   liftAssertionPure, assertionPtoM, liftAssertionM
+
+  -- * Examples
+
+  -- |A simple example with vacuous tests:
+  --
+  -- > main :: IO ()
+  -- > main = do
+  -- >   tlt test
+  -- >
+  -- > test :: Monad m => TLT m ()
+  -- > test = do
+  -- >   "True passes" ~::- True
+  -- >   "2 is 3 as single Bool" ~::- 2 == 3
+  -- >   "2 is 2 as single Bool" ~::- 2 == 2
+  -- >   inGroup "== assertions" $ do
+  -- >     inGroup "pure" $ do
+  -- >       "2 is 3 as pure assertion" ~: 2 !==- 3
+  -- >       "2 is 2 as pure assertion" ~: 2 !==- 2
+  -- >     inGroup "monadic" $ do
+  -- >       "2 is 3 as result" ~: 2 !== return 3
+  -- >       "2 is 2 as result" ~: 2 !== return 2
+  -- >   inGroup "/= pure assertions" $ do
+  -- >     "2 not 3" ~: 2 !/=- 3
+  -- >     "2 not 2" ~: 2 !/=- 2
+  -- >   "2 not 3 as result" ~: 2 !/= return 3
+  -- >   "2 not 2 as result" ~: 2 !/= return 2
+  --
+  -- Running these tests should give:
+  --
+  -- > Running tests:
+  -- > - True passes: Pass
+  -- > - 2 is 3 as single Bool: FAIL Expected True but got False
+  -- > - 2 is 2 as single Bool: Pass
+  -- > - == assertions:
+  -- >   - pure:
+  -- >     - 2 is 3 as pure assertion: FAIL Expected 2 but got 3
+  -- >     - 2 is 2 as pure assertion: Pass
+  -- >   - monadic:
+  -- >     - 2 is 3 as result: FAIL Expected 2 but got 3
+  -- >     - 2 is 2 as result: Pass
+  -- > - /= pure assertions:
+  -- >   - 2 not 3: Pass
+  -- >   - 2 not 2: FAIL Expected other than 2 but got 2
+  -- > - 2 not 3 as result: Pass
+  -- > - 2 not 2 as result: FAIL Expected other than 2 but got 2
+  -- > Found 5 errors in 11 tests; exiting
+
   ) where
 
 import Control.Monad
