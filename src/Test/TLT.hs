@@ -220,6 +220,14 @@ data TLTopts = TLTopts {
 -- |Default initial options
 defaultOpts = TLTopts False True
 
+-- |Update the display of showing passes in a `TLTopts` record.
+withShowPasses :: TLTopts -> Bool -> TLTopts
+withShowPasses (TLTopts _ f) b = TLTopts b f
+
+-- |Update the display of showing passes in a `TLTopts` record.
+withExitAfterFail :: TLTopts -> Bool -> TLTopts
+withExitAfterFail (TLTopts p _) b = TLTopts p b
+
 -- |Synonym for the elements of the `TLT` state.
 type TLTstate = (TLTopts, TRBuf)
 
@@ -275,8 +283,8 @@ tlt (TLT t) = do
 -- with problems which need fixing.
 reportAllTestResults :: Monad m => Bool -> TLT m ()
 reportAllTestResults b = TLT $ do
-  (TLTopts _ e, tr) <- get
-  put $ (TLTopts b e, tr)
+  (opts, tr) <- get
+  put $ (opts `withShowPasses` b, tr)
 
 -- |This function controls whether `tlt` will exit after displaying
 -- test results which include at least one failing test.  By default,
@@ -285,8 +293,8 @@ reportAllTestResults b = TLT $ do
 -- only when the former parts all pass.
 setExitAfterFailDisplay :: Monad m => Bool -> TLT m ()
 setExitAfterFailDisplay b = TLT $ do
-  (TLTopts d _, tr) <- get
-  put $ (TLTopts d b, tr)
+  (opts, tr) <- get
+  put $ (opts `withExitAfterFail` b, tr)
 
 -- |Organize the tests in the given subcomputation as a separate group
 -- within the test results we will report.
