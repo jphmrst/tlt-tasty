@@ -206,6 +206,13 @@ closeTRBuf :: TRBuf -> [TestResult]
 closeTRBuf (Top _ _ ts) = reverse ts
 closeTRBuf b = closeTRBuf $ popGroup b
 
+-- |Record of options which may be specified for running and reporting
+-- TLT tests.
+data TLTopts = TLTops {
+  optShowPasses :: Bool,
+  optQuitAfterFailReport :: Bool
+}
+
 -- |Monad transformer for TLT tests.  This layer stores the results
 -- from tests as they are executed.
 newtype Monad m => TLT m r = TLT { unwrap :: StateT TRBuf m r }
