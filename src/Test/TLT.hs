@@ -22,6 +22,8 @@ language governing permissions and limitations under the License.
 module Test.TLT (
   -- * A monad transformer for housing a test process
   TLT, tlt, -- MonadTLT,
+  -- ** Session options
+  reportAllTestResults, setExitAfterFailDisplay,
   -- * Writing tests
   Assertion,
   -- ** `TLT` commands
@@ -265,6 +267,26 @@ tlt (TLT t) = do
   liftIO $ putStrLn "Running tests:"
   (_, (opts, resultsBuf)) <- runStateT t $ (defaultOpts, Top 0 0 [])
   liftIO $ report opts $ closeTRBuf resultsBuf
+
+-- |This function controls whether `tlt` will report only tests which
+-- fail, suppressing any display of tests which pass, or else report
+-- the results of all tests.  The default is the former: the idea is
+-- that no news should be good news, with the programmer bothered only
+-- with problems which need fixing.
+reportAllTestResults :: Monad m => Bool -> TLT m ()
+reportAllTestResults b = TLT $ do
+  (TLTopts _ e, tr) <- get
+  put $ (TLTopts b e, tr)
+
+-- |This function controls whether `tlt` will exit after displaying
+-- test results which include at least one failing test.  By default,
+-- it will exit in this situation.  The idea is that a test suite can
+-- be broken into parts when it makes sense to run the latter parts
+-- only when the former parts all pass.
+setExitAfterFailDisplay :: Monad m => Bool -> TLT m ()
+setExitAfterFailDisplay b = TLT $ do
+  (TLTopts d _, tr) <- get
+  put $ (TLTopts d b, tr)
 
 -- |Organize the tests in the given subcomputation as a separate group
 -- within the test results we will report.
