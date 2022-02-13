@@ -29,7 +29,7 @@ module Test.TLT (
   -- ** Assertions
   (!==),  (!/=),  (!<),  (!>),  (!<=),  (!>=),
   (!==-), (!/=-), (!<-), (!>-), (!<=-), (!>=-),
-  empty, nonempty, emptyP, nonemptyP,
+  empty, nonempty, nothing, emptyP, nonemptyP, nothingP,
   -- ** Building new assertions
   liftAssertion2Pure, assertion2PtoM, liftAssertion2M,
   liftAssertionPure, assertionPtoM, liftAssertionM
@@ -82,6 +82,7 @@ module Test.TLT (
 
   ) where
 
+import Data.Maybe
 import Control.Monad
 import Control.Monad.IO.Class
 import Control.Monad.Trans.Class
@@ -434,3 +435,12 @@ nonemptyP = liftAssertionPure (not . null)
 -- computation is non-empty.
 nonempty :: (Monad m, Foldable t) => m (t a) -> Assertion m
 nonempty = assertionPtoM nonemptyP
+
+-- |Assert that a `Maybe` value is `Nothing`.
+nothingP :: Monad m => Maybe a -> Assertion m
+nothingP = liftAssertionPure isNothing
+           (\ _ -> "Expected empty Maybe value but got non-Nothing")
+
+-- |Assert that a `Maybe` result ofa computation is `Nothing`.
+nothing :: Monad m => m (Maybe a) -> Assertion m
+nothing = assertionPtoM nothingP
