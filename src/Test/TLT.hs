@@ -128,17 +128,17 @@ totalTestCount :: [TestResult] -> Int
 totalTestCount = foldr (+) 0 . map testCount
 
 -- |Report the results of tests.
-report :: [TestResult] -> IO ()
-report trs = let fails = totalFailCount trs
-                 tests = totalTestCount trs
-             in do report' "" trs
-                   if fails > 0
-                     then do putStrLn $
-                               "Found " ++ show fails ++ " error"
-                               ++ (if fails > 1 then "s" else "")
-                               ++ " in " ++ show tests ++ " tests; exiting"
-                             exitFailure
-                     else putStrLn $ show tests ++ " test"
+report :: TLTopts -> [TestResult] -> IO ()
+report opts trs = let fails = totalFailCount trs
+                      tests = totalTestCount trs
+                  in do report' "" trs
+                        if fails > 0
+                          then do putStrLn $
+                                    "Found " ++ show fails ++ " error"
+                                    ++ (if fails > 1 then "s" else "")
+                                    ++ " in " ++ show tests ++ " tests; exiting"
+                                  exitFailure
+                          else putStrLn $ show tests ++ " test"
                                ++ (if tests > 1 then "s" else "")
                                ++ " passing."
   where report' ind trs = forM_ trs $ \ tr -> do
@@ -208,14 +208,17 @@ closeTRBuf b = closeTRBuf $ popGroup b
 
 -- |Record of options which may be specified for running and reporting
 -- TLT tests.
-data TLTopts = TLTops {
+data TLTopts = TLTopts {
   optShowPasses :: Bool,
   optQuitAfterFailReport :: Bool
 }
 
+-- |Synonym for the elements of the `TLT` state.
+type TLTstate = (TLTopts, TRBuf)
+
 -- |Monad transformer for TLT tests.  This layer stores the results
 -- from tests as they are executed.
-newtype Monad m => TLT m r = TLT { unwrap :: StateT TRBuf m r }
+newtype Monad m => TLT m r = TLT { unwrap :: StateT TLTstate m r }
 
 -- |Using `TLT` as a functor.
 instance Monad m => Functor (TLT m) where
@@ -255,18 +258,18 @@ instance MonadIO m => MonadIO (TLT m) where
 tlt :: MonadIO m => TLT m r -> m ()
 tlt (TLT t) = do
   liftIO $ putStrLn "Running tests:"
-  (_, resultsBuf) <- runStateT t $ Top 0 0 []
-  liftIO $ report $ closeTRBuf resultsBuf
+  (_, (opts, resultsBuf)) <- runStateT t $ (TLTopts False False, Top 0 0 [])
+  liftIO $ report opts $ closeTRBuf resultsBuf
 
 -- |Organize the tests in the given subcomputation as a separate group
 -- within the test results we will report.
 inGroup :: Monad m => String -> TLT m () -> TLT m ()
 inGroup name group = do
-  before <- TLT get
-  TLT $ put $ Buf before 0 0 name []
+  (opts, before) <- TLT get
+  TLT $ put $ (opts, Buf before 0 0 name [])
   group
-  after <- TLT $ get
-  TLT $ put $ popGroup after
+  (opts', after) <- TLT $ get
+  TLT $ put $ (opts', popGroup after)
 
 {-  Does not work now, but not important to fix immediately.
 
@@ -287,25 +290,25 @@ infix 0 ~:, ~::, ~::-
 -- |Name and perform a test of an `Assertion`.
 (~:) :: Monad m => String -> Assertion m -> TLT m ()
 s ~: a = TLT $ do
-  oldState <- get
+  (opts, oldState) <- get
   assessment <- lift a
-  put $ addResult oldState $ Test s assessment
+  put (opts, addResult oldState $ Test s assessment)
 
 -- |Name and perform a test of a (pure) boolean value.
 (~::-) :: Monad m => String -> Bool -> TLT m ()
 s ~::- b = TLT $ do
-  oldState <- get
-  put $ addResult oldState $ Test s $
-    if b then [] else [Asserted $ "Expected True but got False"]
+  (opts, oldState) <- get
+  put (opts, addResult oldState $ Test s $
+        if b then [] else [Asserted $ "Expected True but got False"])
 
 -- |Name and perform a test of a boolean value returned by a
 -- computation in the wrapped monad @m@.
 (~::) :: Monad m => String -> m Bool -> TLT m ()
 s ~:: bM = TLT $ do
   b <- lift bM
-  oldState <- get
-  put $ addResult oldState $ Test s $
-    if b then [] else [Asserted $ "Expected True but got False"]
+  (opts, oldState) <- get
+  put (opts, addResult oldState $ Test s $
+        if b then [] else [Asserted $ "Expected True but got False"])
 
 infix 1 !==,  !/=,  !<,  !>,  !<=,  !>=
 infix 1 !==-, !/=-, !<-, !>-, !<=-, !>=-
