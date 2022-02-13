@@ -129,36 +129,38 @@ totalTestCount = foldr (+) 0 . map testCount
 
 -- |Report the results of tests.
 report :: TLTopts -> [TestResult] -> IO ()
-report opts trs = let fails = totalFailCount trs
-                      tests = totalTestCount trs
-                  in do report' "" trs
-                        if fails > 0
-                          then do putStrLn $
-                                    "Found " ++ show fails ++ " error"
-                                    ++ (if fails > 1 then "s" else "")
-                                    ++ " in " ++ show tests ++ " tests; exiting"
-                                  exitFailure
-                          else putStrLn $ show tests ++ " test"
-                               ++ (if tests > 1 then "s" else "")
-                               ++ " passing."
-  where report' ind trs = forM_ trs $ \ tr -> do
-          case tr of
-            Test s r -> do
-              putStr $ ind ++ "- " ++ s ++ ": "
-              case r of
-                [] -> do
-                  greenPass
-                  putStrLn ""
-                x : [] -> do
-                  redFail
-                  putStrLn $ " " ++ formatFail x
-                _ -> do
-                  redFail
-                  putStrLn ":"
-                  forM_ r $ \ f -> putStrLn $ ind ++ "- " ++ formatFail f
-            Group s _ _ trs' -> do
-              putStrLn $ ind ++ "- " ++ s ++ ":"
-              report' ("  " ++ ind) trs'
+report (TLTopts showPasses exitAfterFailDisplay) trs =
+  let fails = totalFailCount trs
+      tests = totalTestCount trs
+  in do report' "" trs
+        if fails > 0
+          then do putStrLn $
+                    "Found " ++ show fails ++ " error"
+                      ++ (if fails > 1 then "s" else "")
+                      ++ " in " ++ show tests ++ " tests; exiting"
+                  when exitAfterFailDisplay exitFailure
+          else putStrLn $ show tests ++ " test"
+                 ++ (if tests > 1 then "s" else "")
+                 ++ " passing."
+  where report' ind trs = forM_ trs $ \ tr ->
+          when (failCount tr > 0 || showPasses) $
+            case tr of
+              Test s r -> do
+                putStr $ ind ++ "- " ++ s ++ ": "
+                case r of
+                  [] -> do
+                    greenPass
+                    putStrLn ""
+                  x : [] -> do
+                    redFail
+                    putStrLn $ " " ++ formatFail x
+                  _ -> do
+                    redFail
+                    putStrLn ":"
+                    forM_ r $ \ f -> putStrLn $ ind ++ "- " ++ formatFail f
+              Group s _ _ trs' -> do
+                putStrLn $ ind ++ "- " ++ s ++ ":"
+                report' ("  " ++ ind) trs'
 
 greenPass = do
   setSGR [
@@ -213,6 +215,9 @@ data TLTopts = TLTopts {
   optQuitAfterFailReport :: Bool
 }
 
+-- |Default initial options
+defaultOpts = TLTopts False True
+
 -- |Synonym for the elements of the `TLT` state.
 type TLTstate = (TLTopts, TRBuf)
 
@@ -258,7 +263,7 @@ instance MonadIO m => MonadIO (TLT m) where
 tlt :: MonadIO m => TLT m r -> m ()
 tlt (TLT t) = do
   liftIO $ putStrLn "Running tests:"
-  (_, (opts, resultsBuf)) <- runStateT t $ (TLTopts False False, Top 0 0 [])
+  (_, (opts, resultsBuf)) <- runStateT t $ (defaultOpts, Top 0 0 [])
   liftIO $ report opts $ closeTRBuf resultsBuf
 
 -- |Organize the tests in the given subcomputation as a separate group
