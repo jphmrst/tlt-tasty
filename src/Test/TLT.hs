@@ -136,14 +136,30 @@ report (TLTopts showPasses exitAfterFailDisplay) trs =
       tests = totalTestCount trs
   in do report' "" trs
         if fails > 0
-          then do putStrLn $
+          then do setSGR [
+                    SetColor Foreground Vivid Red,
+                    SetConsoleIntensity BoldIntensity
+                    ]
+                  putStrLn $
                     "Found " ++ show fails ++ " error"
                       ++ (if fails > 1 then "s" else "")
                       ++ " in " ++ show tests ++ " tests; exiting"
+                  setSGR [
+                    SetColor Foreground Vivid Black,
+                    SetConsoleIntensity NormalIntensity
+                    ]
                   when exitAfterFailDisplay exitFailure
-          else putStrLn $ show tests ++ " test"
-                 ++ (if tests > 1 then "s" else "")
-                 ++ " passing."
+          else do setSGR [
+                    SetColor Foreground Vivid Green,
+                    SetConsoleIntensity BoldIntensity
+                    ]
+                  putStrLn $ show tests ++ " test"
+                    ++ (if tests > 1 then "s" else "")
+                    ++ " passing."
+                  setSGR [
+                    SetColor Foreground Vivid Black,
+                    SetConsoleIntensity NormalIntensity
+                    ]
   where report' ind trs = forM_ trs $ \ tr ->
           when (failCount tr > 0 || showPasses) $
             case tr of
