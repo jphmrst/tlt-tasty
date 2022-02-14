@@ -136,30 +136,18 @@ report (TLTopts showPasses exitAfterFailDisplay) trs =
       tests = totalTestCount trs
   in do report' "" trs
         if fails > 0
-          then do setSGR [
-                    SetColor Foreground Vivid Red,
-                    SetConsoleIntensity BoldIntensity
-                    ]
+          then do boldRed
                   putStrLn $
                     "Found " ++ show fails ++ " error"
                       ++ (if fails > 1 then "s" else "")
                       ++ " in " ++ show tests ++ " tests; exiting"
-                  setSGR [
-                    SetColor Foreground Vivid Black,
-                    SetConsoleIntensity NormalIntensity
-                    ]
+                  mediumBlack
                   when exitAfterFailDisplay exitFailure
-          else do setSGR [
-                    SetColor Foreground Vivid Green,
-                    SetConsoleIntensity BoldIntensity
-                    ]
+          else do boldGreen
                   putStrLn $ show tests ++ " test"
                     ++ (if tests > 1 then "s" else "")
                     ++ " passing."
-                  setSGR [
-                    SetColor Foreground Vivid Black,
-                    SetConsoleIntensity NormalIntensity
-                    ]
+                  mediumBlack
   where report' ind trs = forM_ trs $ \ tr ->
           when (failCount tr > 0 || showPasses) $
             case tr of
@@ -180,25 +168,31 @@ report (TLTopts showPasses exitAfterFailDisplay) trs =
                 putStrLn $ ind ++ "- " ++ s ++ ":"
                 report' ("  " ++ ind) trs'
 
+boldBlack = setSGR [
+  SetColor Foreground Vivid Black, SetConsoleIntensity BoldIntensity ]
+boldRed = setSGR [
+  SetColor Foreground Vivid Red, SetConsoleIntensity BoldIntensity ]
+boldGreen = setSGR [
+  SetColor Foreground Vivid Green, SetConsoleIntensity BoldIntensity ]
+
+mediumRed = setSGR [
+  SetColor Foreground Vivid Red, SetConsoleIntensity NormalIntensity ]
+mediumGreen = setSGR [
+  SetColor Foreground Vivid Green, SetConsoleIntensity NormalIntensity ]
+mediumBlue = setSGR [
+  SetColor Foreground Vivid Blue, SetConsoleIntensity NormalIntensity ]
+mediumBlack = setSGR [
+  SetColor Foreground Vivid Black, SetConsoleIntensity NormalIntensity ]
+
 greenPass = do
-  setSGR [
-    SetColor Foreground Vivid Blue
-    ]
+  mediumBlue
   putStr "Pass"
-  setSGR [
-    SetColor Foreground Vivid Black
-    ]
+  mediumBlack
 
 redFail = do
-  setSGR [
-    SetColor Foreground Vivid Red,
-    SetConsoleIntensity BoldIntensity
-    ]
+  boldRed
   putStr "FAIL"
-  setSGR [
-    SetColor Foreground Vivid Black,
-    SetConsoleIntensity NormalIntensity
-    ]
+  mediumBlack
 
 -- |Accumulator for test results, in the style of a simplified Huet's
 -- zipper which only ever adds to the end of the structure.
