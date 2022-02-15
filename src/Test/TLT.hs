@@ -7,11 +7,14 @@ Maintainer  : haskell-tlt@maraist.org
 Stability   : experimental
 Portability : POSIX
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
-implied, for NON-COMMERCIAL use.  See the License for the specific
-language governing permissions and limitations under the License.
+TLT is a small unit test system oriented towards examining
+intermediate results of computations in monad transformers.  It is
+intended to be lightweight for the programmer, and does not require
+tests to be specified is some sort of formal list of tests.  Rather,
+tests are simply commands in a monad stack which includes the
+@Test.TLT@ transformer layer.  This Haddock page is the main piece of
+documentation; or see also the GitHub repository
+<https://github.com/jphmrst/TLT/>.
 
 -}
 
@@ -20,21 +23,101 @@ language governing permissions and limitations under the License.
 {-# LANGUAGE UndecidableInstances #-}
 
 module Test.TLT (
-  -- * A monad transformer for housing a test process
-  TLT, tlt, -- MonadTLT,
-  -- ** Session options
-  reportAllTestResults, setExitAfterFailDisplay,
-  -- * Writing tests
-  Assertion,
-  -- ** `TLT` commands
-  inGroup, (~:), (~::), (~::-),
-  -- ** Assertions
-  (!==),  (!/=),  (!<),  (!>),  (!<=),  (!>=),
-  (!==-), (!/=-), (!<-), (!>-), (!<=-), (!>=-),
-  empty, nonempty, nothing, emptyP, nonemptyP, nothingP,
-  -- ** Building new assertions
-  liftAssertion2Pure, assertion2PtoM, liftAssertion2M,
-  liftAssertionPure, assertionPtoM, liftAssertionM
+  -- * Overview
+
+  -- |A TLT test is a command in the `TLT` monad transformer.  There
+  -- is no separation between the specification and execution of a
+  -- test; TLT makes no record of an executable test itself, only of
+  -- its result.  So in the main instance for testing, the core `IO`
+  -- monad should be wrapped in the `TLT` transformer, and in whatever
+  -- other layers are also to be tested.
+  --
+  -- In TLT, all tests are associated with a string which names or
+  -- otherwise describes the test.  Each test is introduced with one
+  -- of the @~:@, @~::@, or @~::-@ infix operators.
+  --
+  -- The simplest tests simply look for a `True` boolean value.  These
+  -- tests are introduced with @~::@ or @~::-@.  The difference
+  -- between the two is whether the boolean value is the result of a
+  -- pure `Bool` expression, or whether it is returned as the result
+  -- of a computation.  In TLT, we distinguish between the two cases
+  -- by including a trailing hyphen @-@ to operators on pure
+  -- expressions, and omitting the hyphen from operators on monadic
+  -- arguments.  So these two tests will both pass,
+  --
+  -- > "2 is 2 as single Bool" ~::- 2 == 2
+  -- > "2 is 2 a returned Bool" ~:: return $ 2 == 2
+  --
+  -- The @~:@ operator introduces a more general form of test.  The
+  -- right-hand side of @~:@ should be an `Assertion` formed with one
+  -- of TLT's built-in assertion operators, or returned from a
+  -- package's custom assertions.  `Assertion`s can give more detailed
+  -- failure information then simple `Bool`s.  A hyphen or @P@
+  -- suffixes assertion operators which operate on pure values instead
+  -- of the results of monadic computations (as with @~::@ and
+  -- @~::-@).  TLT provides these assertion operators:
+  --
+  -- +--------------------------------+----------------------------------------+
+  -- | Operator                       | Meaning                                |
+  -- +================================+========================================+
+  -- | /expected/ @(!==)@ /monadic/   | The actual result must be equal        |
+  -- +--------------------------------+ to the given expected result.          |
+  -- | /expected/ @(!==-)@ /expr/     |                                        |
+  -- +--------------------------------+----------------------------------------+
+  -- | /unexpected/ @(!/=)@ /monadic/ | The actual result must differ          |
+  -- +--------------------------------+ from the given unexpected result.      |
+  -- | /unexpected/ @(!/=-)@ /expr/   |                                        |
+  -- +--------------------------------+----------------------------------------+
+  -- | /expected/ @(!<)@ /monadic/    | The actual result must be greater      |
+  -- +--------------------------------+ than the given lower bound.            |
+  -- | /expected/ @(!<-)@ /expr/      |                                        |
+  -- +--------------------------------+----------------------------------------+
+  -- | /expected/ @(!>)@ /monadic/    | The actual result must be less         |
+  -- +--------------------------------+ than the given upper bound.            |
+  -- | /expected/ @(!>-)@ /expr/      |                                        |
+  -- +--------------------------------+----------------------------------------+
+  -- | /expected/ @(!<=)@ /monadic/   | The actual result must be greater than |
+  -- +--------------------------------+ or equal to the given lower bound.     |
+  -- | /expected/ @(!<=-)@ /expr/     |                                        |
+  -- +--------------------------------+----------------------------------------+
+  -- | /expected/ @(!>=)@ /monadic/   | The actual result must be less than    |
+  -- +--------------------------------+ or equal to the given upper bound.     |
+  -- | /expected/ @(!>=-)@ /expr/     |                                        |
+  -- +--------------------------------+----------------------------------------+
+  -- | @empty@ /monadic/              | The actual result must be an empty     |
+  -- +--------------------------------+ `Traversable` structure.               |
+  -- | @emptyP@ /expr/                |                                        |
+  -- +--------------------------------+----------------------------------------+
+  -- | @nonempty@ /monadic/           | The actual result must be a nonempty   |
+  -- +--------------------------------+ `Traversable` structure.               |
+  -- | @nonemptyP@ /expr/             |                                        |
+  -- +--------------------------------+----------------------------------------+
+  -- | @nothing@ /monadic/            | The actual result must be `Nothing`    |
+  -- +--------------------------------+ (in a `Maybe`-typed value)             |
+  -- | @nothingP@ /expr/              |                                        |
+  -- +--------------------------------+----------------------------------------+
+  --
+  -- Note that although the assertions are in pairs of one for testing
+  -- a pure expression value, and one for testing the result returned
+  -- from a monadic computation, in all of the builtin binary
+  -- assertions the /expected/ value argument is always a pure value,
+  -- not itself monadic.
+  --
+  -- The `inGroup` function allows related tests to be reported as a
+  -- group.  The function takes two arguments, a `String` name for the
+  -- group, and the `TLT` computation housing its tests.  Groups have
+  -- impact only in terms of organizing the output you see in the
+  -- final report of tests run.
+  --
+  -- Finally, it is straightforward to write new `Assertion`s for
+  -- project-specific test criteria: they are simply functions
+  -- returning monadic values.  There are several functions in the
+  -- final section of this document which transform pure predicates
+  -- into `Assertion`s, or which transform one form of `Assertion`
+  -- into another.
+  --
+  -- The source repository for TLT lives at
+  -- <https://github.com/jphmrst/tlt>.
 
   -- * Examples
 
@@ -65,6 +148,30 @@ module Test.TLT (
   -- Running these tests should give:
   --
   -- > Running tests:
+  -- > - 2 is 3 as single Bool: FAIL Expected True but got False
+  -- > - == assertions:
+  -- >   - pure:
+  -- >     - 2 is 3 as pure assertion: FAIL Expected 2 but got 3
+  -- >   - monadic:
+  -- >     - 2 is 3 as result: FAIL Expected 2 but got 3
+  -- > - /= pure assertions:
+  -- >   - 2 not 2: FAIL Expected other than 2 but got 2
+  -- > - 2 not 2 as result: FAIL Expected other than 2 but got 2
+  -- > Found 5 errors in 11 tests; exiting
+  --
+  -- Note that only failing tests appear.  This can be configured in the
+  -- @test@ command: add a call at the beginning of @test@ to
+  -- @reportAllTestResults@ to control this behavior:
+  --
+  -- > test :: Monad m => TLT m ()
+  -- > test = do
+  -- >   reportAllTestResults True
+  -- >   "True passes" ~::- True
+  -- >   ...
+  --
+  -- and the output will be
+  --
+  -- > Running tests:
   -- > - True passes: Pass
   -- > - 2 is 3 as single Bool: FAIL Expected True but got False
   -- > - 2 is 2 as single Bool: Pass
@@ -81,6 +188,24 @@ module Test.TLT (
   -- > - 2 not 3 as result: Pass
   -- > - 2 not 2 as result: FAIL Expected other than 2 but got 2
   -- > Found 5 errors in 11 tests; exiting
+
+  -- * The TLT transformer
+  TLT, tlt, -- MonadTLT,
+  -- ** Session options
+  reportAllTestResults, setExitAfterFailDisplay,
+  -- * Writing tests
+  Assertion,
+  -- ** `TLT` commands
+  (~:), (~::), (~::-), inGroup,
+  -- ** Assertions
+  (!==),  (!/=),  (!<),  (!>),  (!<=),  (!>=),
+  (!==-), (!/=-), (!<-), (!>-), (!<=-), (!>=-),
+  empty, nonempty, nothing, emptyP, nonemptyP, nothingP,
+  -- ** Building new assertions
+  -- *** Unary assertions
+  liftAssertionPure, assertionPtoM, liftAssertionM,
+  -- *** Binary assertions
+  liftAssertion2Pure, assertion2PtoM, liftAssertion2M
 
   ) where
 
@@ -332,21 +457,21 @@ instance (MonadTrans m, MonadTLT m0, Monad (m m0)) => MonadTLT (m m0) where
 
 infix 0 ~:, ~::, ~::-
 
--- |Name and perform a test of an `Assertion`.
+-- |Label and perform a test of an `Assertion`.
 (~:) :: Monad m => String -> Assertion m -> TLT m ()
 s ~: a = TLT $ do
   (opts, oldState) <- get
   assessment <- lift a
   put (opts, addResult oldState $ Test s assessment)
 
--- |Name and perform a test of a (pure) boolean value.
+-- |Label and perform a test of a (pure) boolean value.
 (~::-) :: Monad m => String -> Bool -> TLT m ()
 s ~::- b = TLT $ do
   (opts, oldState) <- get
   put (opts, addResult oldState $ Test s $
         if b then [] else [Asserted $ "Expected True but got False"])
 
--- |Name and perform a test of a boolean value returned by a
+-- |Label and perform a test of a boolean value returned by a
 -- computation in the wrapped monad @m@.
 (~::) :: Monad m => String -> m Bool -> TLT m ()
 s ~:: bM = TLT $ do
@@ -448,8 +573,8 @@ liftAssertion2M tester explainer exp actualM =
 (!>=) = assertion2PtoM (!>=-)
 
 -- |Transform a unary function on a value (plus a generator of a
--- failure message) into a unary `Assertion` function for a pure given
--- actual value.
+-- failure message) into a unary function returning an `Assertion` for
+-- a pure given actual value.
 liftAssertionPure ::
   (Monad m) => (a -> Bool) -> (a -> String) -> a -> Assertion m
 liftAssertionPure tester explainer actual = return $

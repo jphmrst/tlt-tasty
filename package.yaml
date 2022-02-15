@@ -7,20 +7,11 @@ maintainer:          "haskell-tlt@maraist.org"
 copyright:           "2022 John Maraist"
 category:	     Test
 synopsis:	     "Testing focused on computations in monad transformers."
-description:	     "A small unit test system oriented with an emphasis on examining intermediate results of computations in monad transformers."
+description:	     "A small unit test system oriented with an emphasis on examining intermediate results of computations in monad transformers.  The Test.TLT Haddock page is the main piece of documentation; or see also the GitHub repository <https://github.com/jphmrst/TLT/>."
 
 extra-source-files:
 - README.md
 - ChangeLog.md
-
-# Metadata used when publishing your package
-# synopsis:            Short description of your package
-# category:            Web
-
-# To avoid duplicated efforts in documentation and dealing with the
-# complications of embedding Haddock markup inside cabal files, it is
-# common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/githubuser/TLT#readme>
 
 dependencies:
 - base >= 4.7 && < 5
