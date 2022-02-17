@@ -1,6 +1,6 @@
 name:                TLT
 version:             0.1.0.0
-github:              "jpmrst/TLT"
+github:              "jphmrst/TLT"
 license:             LGPL-3
 author:              "John Maraist"
 maintainer:          "haskell-tlt@maraist.org"
