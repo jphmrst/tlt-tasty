@@ -214,6 +214,7 @@ module Test.TLT (
 import Data.Maybe
 import Control.Monad
 import Control.Monad.IO.Class
+import Control.Monad.ST.Trans
 import Control.Monad.Trans.Class
 import Control.Monad.Trans.State.Strict
 import System.Console.ANSI
