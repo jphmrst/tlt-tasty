@@ -21,6 +21,7 @@ documentation; or see also the GitHub repository
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module Test.TLT (
   -- * Overview
@@ -441,17 +442,14 @@ inGroup name group = do
   (opts', after) <- TLT $ get
   TLT $ put $ (opts', popGroup after)
 
-{-  Does not work now, but not important to fix immediately.
-
 -- |Allowing the `TLT` layer to be wrapped by the layers it tests,
 -- instead of `TLT` wrapping them.
 
-class Monad m => MonadTLT m where
-  liftTLT :: (forall m0 . Monad m0 => TLT m0 a) -> m a
+class (Monad m, Monad n) => MonadTLT m n where
+  liftTLT :: TLT n a -> m a
 
-instance (MonadTrans m, MonadTLT m0, Monad (m m0)) => MonadTLT (m m0) where
-  liftTLT = lift . liftTLT
--}
+instance Monad m => MonadTLT (TLT m) m where
+  liftTLT = id
 
 -- * Specifying individual tests
 
