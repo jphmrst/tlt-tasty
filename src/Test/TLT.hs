@@ -22,6 +22,7 @@ documentation; or see also the GitHub repository
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FunctionalDependencies #-}
 
 module Test.TLT (
   -- * Overview
@@ -404,6 +405,15 @@ instance MonadTrans TLT where
 instance MonadIO m => MonadIO (TLT m) where
   liftIO = lift . liftIO
 
+-- |Allowing the `TLT` layer to be wrapped by the layers it tests,
+-- instead of `TLT` wrapping them.
+
+class (Monad m, Monad n) => MonadTLT m n | m -> n where
+  liftTLT :: TLT n a -> m a
+
+instance Monad m => MonadTLT (TLT m) m where
+  liftTLT = id
+
 -- |Execute the tests specified in a `TLT` monad, and report the
 -- results.
 tlt :: MonadIO m => TLT m r -> m ()
@@ -434,48 +444,39 @@ setExitAfterFailDisplay b = TLT $ do
 
 -- |Organize the tests in the given subcomputation as a separate group
 -- within the test results we will report.
-inGroup :: Monad m => String -> TLT m () -> TLT m ()
+inGroup :: MonadTLT m n => String -> m () -> m ()
 inGroup name group = do
-  (opts, before) <- TLT get
-  TLT $ put $ (opts, Buf before 0 0 name [])
+  (opts, before) <- liftTLT $ TLT get
+  liftTLT $ TLT $ put $ (opts, Buf before 0 0 name [])
   group
-  (opts', after) <- TLT $ get
-  TLT $ put $ (opts', popGroup after)
-
--- |Allowing the `TLT` layer to be wrapped by the layers it tests,
--- instead of `TLT` wrapping them.
-
-class (Monad m, Monad n) => MonadTLT m n where
-  liftTLT :: TLT n a -> m a
-
-instance Monad m => MonadTLT (TLT m) m where
-  liftTLT = id
+  (opts', after) <- liftTLT $ TLT $ get
+  liftTLT $ TLT $ put $ (opts', popGroup after)
 
 -- * Specifying individual tests
 
 infix 0 ~:, ~::, ~::-
 
 -- |Label and perform a test of an `Assertion`.
-(~:) :: Monad m => String -> Assertion m -> TLT m ()
-s ~: a = TLT $ do
-  (opts, oldState) <- get
-  assessment <- lift a
-  put (opts, addResult oldState $ Test s assessment)
+(~:) :: MonadTLT m n => String -> Assertion m -> m ()
+s ~: a = do
+  (opts, oldState) <- liftTLT $ TLT $ get
+  assessment <- a
+  liftTLT $ TLT $ put (opts, addResult oldState $ Test s assessment)
 
 -- |Label and perform a test of a (pure) boolean value.
-(~::-) :: Monad m => String -> Bool -> TLT m ()
-s ~::- b = TLT $ do
-  (opts, oldState) <- get
-  put (opts, addResult oldState $ Test s $
+(~::-) :: MonadTLT m n => String -> Bool -> m ()
+s ~::- b = do
+  (opts, oldState) <- liftTLT $ TLT $ get
+  liftTLT $ TLT $ put (opts, addResult oldState $ Test s $
         if b then [] else [Asserted $ "Expected True but got False"])
 
 -- |Label and perform a test of a boolean value returned by a
 -- computation in the wrapped monad @m@.
-(~::) :: Monad m => String -> m Bool -> TLT m ()
-s ~:: bM = TLT $ do
-  b <- lift bM
-  (opts, oldState) <- get
-  put (opts, addResult oldState $ Test s $
+(~::) :: MonadTLT m n => String -> m Bool -> m ()
+s ~:: bM = do
+  b <- bM
+  (opts, oldState) <- liftTLT $ TLT $ get
+  liftTLT $ TLT $ put (opts, addResult oldState $ Test s $
         if b then [] else [Asserted $ "Expected True but got False"])
 
 infix 1 !==,  !/=,  !<,  !>,  !<=,  !>=
