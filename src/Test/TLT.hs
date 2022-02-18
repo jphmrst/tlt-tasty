@@ -123,7 +123,13 @@ module Test.TLT (
 
   -- * Examples
 
-  -- |A simple example with vacuous tests:
+  -- |These examples are from the sample executables and test suite of
+  -- the @TLT@ package.
+
+  -- ** A simple example
+
+  -- |The tests in this example are vacuous, but they show a simple
+  -- setup with both passing and failing tests.
   --
   -- > main :: IO ()
   -- > main = do
@@ -191,6 +197,62 @@ module Test.TLT (
   -- > - 2 not 2 as result: FAIL Expected other than 2 but got 2
   -- > Found 5 errors in 11 tests; exiting
 
+  -- ** Testing monad transformers
+
+  -- |In the previous example `TLT` was the outermost (in fact only)
+  -- monad transformer, but it can appear at any level of the test
+  -- suite's application stack.  Using `TLT` at other than the top
+  -- level is easiest when all of the transformers which might wrap it
+  -- are declared as instances of `MonadTLT`.
+  --
+  -- Consider an application which declares two monad transformers
+  -- @M1T@ and @M2T@.  For simplicity here we take them to be just
+  -- aliases for `IdentityT`:
+  --
+  -- > newtype Monad m => M1T m a = M1T { unwrap1 :: IdentityT m a }
+  -- > runM1T :: Monad m => M1T m a -> m a
+  -- > runM1T = runIdentityT . unwrap1
+  -- >
+  -- > newtype Monad m => M2T m a = M2T { unwrap2 :: IdentityT m a }
+  -- > runM2T :: Monad m => M2T m a -> m a
+  -- > runM2T = runIdentityT . unwrap2
+  --
+  -- And we elide the usual details of including each of them in
+  -- `Functor`, `Applicative`, `Monad` and `MonadTrans`.  We can
+  -- declare instances of each in `MonadTLT`,
+  --
+  -- > instance MonadTLT m n => MonadTLT (M1T m) n where
+  -- >   liftTLT = lift . liftTLT
+  --
+  -- and similarly for @M2T@.  Note that this declaration does require
+  -- @FlexibleInstances@ (because @n@ does not appear in the instance
+  -- type), @MultiParamTypeClasses@ (because we must mention both the
+  -- top transformer @m@ and the monadic type @n@ directly wrapped by
+  -- `TLT` within @m@), and @UndecidableInstances@ (because @n@ is not
+  -- smaller in the recursive context of `MonadTLT`, which is not
+  -- actually a problem because in the definition of `MonadTLT1`, @n@
+  -- is functionally dependent on @m@, which /is/ smaller in the
+  -- recursive context) in the module where the `MonadTLT` instance is
+  -- declared.
+  --
+  -- Now it is convenient to test both transformers:
+  --
+  -- > ttest = do
+  -- >   runM1T $ inGroup "M1T tests" $ m1tests
+  -- >   runM2T $ inGroup "M2T tests" $ m2tests
+  -- >
+  -- > m1tests = M1T $ do
+  -- >   "3 is 3 as pure assertion" ~: 3 !==- 3
+  -- >   "4 is 4 as pure assertion" ~: 4 !==- 4
+  -- >
+  -- > m2tests = M2T $ do
+  -- >   "5 is 5 as pure assertion" ~: 5 !==- 5
+  -- >   "6 is 6 as pure assertion" ~: 6 !==- 6
+  --
+  -- It is not necessary to, for example, harvest test declarations
+  -- from the executions of the @MnT@s for assembly into an overall
+  -- test declaration.
+
   -- * The TLT transformer
   TLT, tlt, MonadTLT, liftTLT,
   -- ** Session options
@@ -216,7 +278,16 @@ import Control.Monad
 import Control.Monad.IO.Class
 import Control.Monad.ST.Trans
 import Control.Monad.Trans.Class
+-- import Control.Monad.Trans.Either
+import Control.Monad.Trans.Free
+import Control.Monad.Trans.Identity
+import Control.Monad.Trans.Maybe
+import Control.Monad.Trans.Reader
+import Control.Monad.Trans.Resource
 import Control.Monad.Trans.State.Strict
+import qualified Control.Monad.Trans.State.Lazy as SL
+import qualified Control.Monad.Trans.Writer.Lazy as WL
+import qualified Control.Monad.Trans.Writer.Strict as WS
 import System.Console.ANSI
 import System.Exit
 
@@ -411,15 +482,49 @@ instance MonadIO m => MonadIO (TLT m) where
 
 {- ------------------------------------------------------------ -}
 
+-- |Extending `TLT` operations across other monad transformers.  For
+-- easiest and most flexible testing, declare the monad transformers
+-- of your application as instances of this class.
 class (Monad m, Monad n) => MonadTLT m n | m -> n where
+  -- |Lift TLT operations within a monad transformer stack.  Note that
+  -- with enough transformer types included in this class, the
+  -- @liftTLT@ function should usually be unnecessary: the commands in
+  -- this module which actually configure testing, or specify a test,
+  -- already @liftTLT@ their own result.  So they will all act as
+  -- top-level transformers in @MonadTLT@.
   liftTLT :: TLT n a -> m a
 
 instance Monad m => MonadTLT (TLT m) m where
   liftTLT = id
 
-{- TODO Add many inferences of standard classes being MonadTLT -}
+instance (MonadTLT m n, Functor f) => MonadTLT (FreeT f m) n where
+    liftTLT = lift . liftTLT
+
+instance MonadTLT m n => MonadTLT (IdentityT m) n where
+  liftTLT = lift . liftTLT
+
+instance MonadTLT m n => MonadTLT (MaybeT m) n where
+  liftTLT = lift . liftTLT
+
+instance MonadTLT m n => MonadTLT (ReaderT r m) n where
+  liftTLT = lift . liftTLT
+
+instance MonadTLT m n => MonadTLT (ResourceT m) n where
+  liftTLT = lift . liftTLT
+
+instance MonadTLT m n => MonadTLT (StateT s m) n where
+  liftTLT = lift . liftTLT
+
+instance MonadTLT m n => MonadTLT (SL.StateT s m) n where
+  liftTLT = lift . liftTLT
 
 instance MonadTLT m n => MonadTLT (STT s m) n where
+  liftTLT = lift . liftTLT
+
+instance (MonadTLT m n, Monoid w) => MonadTLT (WL.WriterT w m) n where
+  liftTLT = lift . liftTLT
+
+instance (MonadTLT m n, Monoid w) => MonadTLT (WS.WriterT w m) n where
   liftTLT = lift . liftTLT
 
 {- ------------------------------------------------------------ -}
@@ -437,8 +542,8 @@ tlt (TLT t) = do
 -- the results of all tests.  The default is the former: the idea is
 -- that no news should be good news, with the programmer bothered only
 -- with problems which need fixing.
-reportAllTestResults :: Monad m => Bool -> TLT m ()
-reportAllTestResults b = TLT $ do
+reportAllTestResults :: MonadTLT m n => Bool -> m ()
+reportAllTestResults b = liftTLT $ TLT $ do
   (opts, tr) <- get
   put $ (opts `withShowPasses` b, tr)
 
@@ -447,8 +552,8 @@ reportAllTestResults b = TLT $ do
 -- it will exit in this situation.  The idea is that a test suite can
 -- be broken into parts when it makes sense to run the latter parts
 -- only when the former parts all pass.
-setExitAfterFailDisplay :: Monad m => Bool -> TLT m ()
-setExitAfterFailDisplay b = TLT $ do
+setExitAfterFailDisplay :: MonadTLT m n => Bool -> m ()
+setExitAfterFailDisplay b = liftTLT $ TLT $ do
   (opts, tr) <- get
   put $ (opts `withExitAfterFail` b, tr)
 
