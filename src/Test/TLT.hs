@@ -408,11 +408,20 @@ instance MonadIO m => MonadIO (TLT m) where
 -- |Allowing the `TLT` layer to be wrapped by the layers it tests,
 -- instead of `TLT` wrapping them.
 
+{- ------------------------------------------------------------ -}
+
 class (Monad m, Monad n) => MonadTLT m n | m -> n where
   liftTLT :: TLT n a -> m a
 
 instance Monad m => MonadTLT (TLT m) m where
   liftTLT = id
+
+{- TODO Add many inferences of standard classes being MonadTLT -}
+
+instance MonadTLT m n => MonadTLT (STT s m) n where
+  liftTLT = lift . liftTLT
+
+{- ------------------------------------------------------------ -}
 
 -- |Execute the tests specified in a `TLT` monad, and report the
 -- results.
