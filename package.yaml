@@ -24,20 +24,20 @@ library:
   - transformers >= 0.5.6.2 && < 0.6   # https://hackage.haskell.org/package/transformers
   - ansi-terminal >= 0.11.1 && < 0.12  # https://hackage.haskell.org/package/ansi-terminal
 
-# executables:
-#   TLT-exe:
-#     main:                Main.hs
-#     source-dirs:         app
-#     ghc-options:
-#     - -threaded
-#     - -rtsopts
-#     - -with-rtsopts=-N
-#     dependencies:
-#     - TLT
+executables:
+  TLT-exe:
+    main:                Failing.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - TLT
 
 tests:
-  TLT-test:
-    main:                Spec.hs
+  TLT-test-fail:
+    main:                Passing.hs
     source-dirs:         test
     ghc-options:
     - -threaded
