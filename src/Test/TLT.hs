@@ -454,13 +454,14 @@ setExitAfterFailDisplay b = TLT $ do
 
 -- |Organize the tests in the given subcomputation as a separate group
 -- within the test results we will report.
-inGroup :: MonadTLT m n => String -> m () -> m ()
+inGroup :: MonadTLT m n => String -> m a -> m a
 inGroup name group = do
   (opts, before) <- liftTLT $ TLT get
   liftTLT $ TLT $ put $ (opts, Buf before 0 0 name [])
-  group
+  result <- group
   (opts', after) <- liftTLT $ TLT $ get
   liftTLT $ TLT $ put $ (opts', popGroup after)
+  return result
 
 -- * Specifying individual tests
 
