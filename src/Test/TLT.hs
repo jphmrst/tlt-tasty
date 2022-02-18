@@ -191,7 +191,7 @@ module Test.TLT (
   -- > Found 5 errors in 11 tests; exiting
 
   -- * The TLT transformer
-  TLT, tlt, -- MonadTLT,
+  TLT, tlt, MonadTLT, liftTLT,
   -- ** Session options
   reportAllTestResults, setExitAfterFailDisplay,
   -- * Writing tests
