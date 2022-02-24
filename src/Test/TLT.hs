@@ -260,7 +260,7 @@ module Test.TLT (
   -- * Writing tests
   Assertion,
   -- ** `TLT` commands
-  (~:), (~::), (~::-), inGroup,
+  (~:), (~::), (~::-), tltFail, inGroup,
   -- ** Assertions
   (!==),  (!/=),  (!<),  (!>),  (!<=),  (!>=),
   (!==-), (!/=-), (!<-), (!>-), (!<=-), (!>=-),
@@ -556,6 +556,14 @@ setExitAfterFailDisplay :: MonadTLT m n => Bool -> m ()
 setExitAfterFailDisplay b = liftTLT $ TLT $ do
   (opts, tr) <- get
   put $ (opts `withExitAfterFail` b, tr)
+
+-- |Report a failure.  Useful in pattern-matching cases which are
+-- entirely not expected.
+tltFail :: MonadTLT m n => String -> String -> m ()
+desc `tltFail` detail = liftTLT $ TLT $ do
+  (opts, before) <- get
+  let after = addResult before $ Test desc [Asserted detail]
+  put (opts, after)
 
 -- |Organize the tests in the given subcomputation as a separate group
 -- within the test results we will report.
