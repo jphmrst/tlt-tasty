@@ -265,6 +265,7 @@ module Test.TLT (
   (!==),  (!/=),  (!<),  (!>),  (!<=),  (!>=),
   (!==-), (!/=-), (!<-), (!>-), (!<=-), (!>=-),
   empty, nonempty, nothing, emptyP, nonemptyP, nothingP,
+  assertFailed, assertSuccess,
   -- ** Building new assertions
   -- *** Unary assertions
   liftAssertionPure, assertionPtoM, liftAssertionM,
@@ -694,6 +695,14 @@ liftAssertion2M tester explainer exp actualM =
 -- calculated value.
 (!>=) :: (Monad m, Ord a, Show a) => a -> m a -> Assertion m
 (!>=) = assertion2PtoM (!>=-)
+
+-- |This assertion always fails with the given message.
+assertFailed :: Monad m => String -> Assertion m
+assertFailed msg = return [Asserted msg]
+
+-- |This assertion always succeeds.
+assertSuccess :: Monad m => Assertion m
+assertSuccess = return []
 
 -- |Transform a unary function on a value (plus a generator of a
 -- failure message) into a unary function returning an `Assertion` for
