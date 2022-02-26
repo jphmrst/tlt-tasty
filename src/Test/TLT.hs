@@ -23,6 +23,7 @@ documentation; or see also the GitHub repository
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
 
 module Test.TLT (
   -- * Overview
@@ -444,39 +445,7 @@ type TLTstate = (TLTopts, TRBuf)
 -- |Monad transformer for TLT tests.  This layer stores the results
 -- from tests as they are executed.
 newtype Monad m => TLT m r = TLT { unwrap :: StateT TLTstate m r }
-
--- |Using `TLT` as a functor.
-instance Monad m => Functor (TLT m) where
-  fmap f (TLT m) = TLT $ do
-    v <- m
-    return $ f v
-
--- |Using `TLT` as an applicative functor.
-instance (Monad m, Functor m) => Applicative (TLT m) where
-  pure v = TLT $ pure v
-  (TLT m1) <*> (TLT m2) = TLT $ do
-    f <- m1
-    v <- m2
-    return (f v)
-
--- |Standard `Monad`ic operations.
-instance (Monad m, Functor m) => Monad (TLT m) where
-  -- (>>=) :: TLT m a -> (a -> TLT m b) -> TLT m b
-  (TLT m) >>= f = TLT $ m >>= (unwrap . f)
-
-  -- (>>) :: TLT m a -> TLT m b -> TLT m b
-  (TLT m1) >> (TLT m2) = TLT $ m1 >> m2
-
-  -- return :: a -> TLT m a
-  return v = TLT $ return v
-
--- |Allow the `TLT` layer to be used from a surrounding transformer.
-instance MonadTrans TLT where
-  lift = TLT . lift
-
--- |Facilitate `IO` interaction within or above the the `TLT` layer.
-instance MonadIO m => MonadIO (TLT m) where
-  liftIO = lift . liftIO
+  deriving (Functor, Applicative, Monad, MonadTrans, MonadIO)
 
 -- |Allowing the `TLT` layer to be wrapped by the layers it tests,
 -- instead of `TLT` wrapping them.
