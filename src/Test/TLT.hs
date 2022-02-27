@@ -58,47 +58,52 @@ module Test.TLT (
   -- failure information then simple `Bool`s.  A hyphen or @P@
   -- suffixes assertion operators which operate on pure values instead
   -- of the results of monadic computations (as with @~::@ and
-  -- @~::-@).  TLT provides these assertion operators:
+  -- @~::-@).  Syntactically, most assertions start with a @\@@ character.
+  -- TLT provides these assertion operators:
   --
-  -- +--------------------------------+----------------------------------------+
-  -- | Operator                       | Meaning                                |
-  -- +================================+========================================+
-  -- | /expected/ @(!==)@ /monadic/   | The actual result must be equal        |
-  -- +--------------------------------+ to the given expected result.          |
-  -- | /expected/ @(!==-)@ /expr/     |                                        |
-  -- +--------------------------------+----------------------------------------+
-  -- | /unexpected/ @(!/=)@ /monadic/ | The actual result must differ          |
-  -- +--------------------------------+ from the given unexpected result.      |
-  -- | /unexpected/ @(!/=-)@ /expr/   |                                        |
-  -- +--------------------------------+----------------------------------------+
-  -- | /expected/ @(!<)@ /monadic/    | The actual result must be greater      |
-  -- +--------------------------------+ than the given lower bound.            |
-  -- | /expected/ @(!<-)@ /expr/      |                                        |
-  -- +--------------------------------+----------------------------------------+
-  -- | /expected/ @(!>)@ /monadic/    | The actual result must be less         |
-  -- +--------------------------------+ than the given upper bound.            |
-  -- | /expected/ @(!>-)@ /expr/      |                                        |
-  -- +--------------------------------+----------------------------------------+
-  -- | /expected/ @(!<=)@ /monadic/   | The actual result must be greater than |
-  -- +--------------------------------+ or equal to the given lower bound.     |
-  -- | /expected/ @(!<=-)@ /expr/     |                                        |
-  -- +--------------------------------+----------------------------------------+
-  -- | /expected/ @(!>=)@ /monadic/   | The actual result must be less than    |
-  -- +--------------------------------+ or equal to the given upper bound.     |
-  -- | /expected/ @(!>=-)@ /expr/     |                                        |
-  -- +--------------------------------+----------------------------------------+
-  -- | @empty@ /monadic/              | The actual result must be an empty     |
-  -- +--------------------------------+ `Traversable` structure.               |
-  -- | @emptyP@ /expr/                |                                        |
-  -- +--------------------------------+----------------------------------------+
-  -- | @nonempty@ /monadic/           | The actual result must be a nonempty   |
-  -- +--------------------------------+ `Traversable` structure.               |
-  -- | @nonemptyP@ /expr/             |                                        |
-  -- +--------------------------------+----------------------------------------+
-  -- | @nothing@ /monadic/            | The actual result must be `Nothing`    |
-  -- +--------------------------------+ (in a `Maybe`-typed value)             |
-  -- | @nothingP@ /expr/              |                                        |
-  -- +--------------------------------+----------------------------------------+
+  -- +---------------------------------+---------------------------------------+
+  -- | Operator                        | Meaning                               |
+  -- +=================================+=======================================+
+  -- | @/expected/ (\@==) /monadic/@   | The actual result must be equal       |
+  -- +---------------------------------+ to the given expected result.         |
+  -- | @/expected/ (\@==-) /expr/@     |                                       |
+  -- +---------------------------------+---------------------------------------+
+  -- | @/unexpected/ (\@\/=) /monadic/@| The actual result must differ         |
+  -- +---------------------------------+ from the given unexpected result.     |
+  -- | @/unexpected/ (\@\/=-) /expr/@  |                                       |
+  -- +---------------------------------+---------------------------------------+
+  -- | @/expected/ (\@<) /monadic/@    | The actual result must be greater     |
+  -- +---------------------------------+ than the given lower bound.           |
+  -- | @/expected/ (\@<-) /expr/@      |                                       |
+  -- +---------------------------------+---------------------------------------+
+  -- | @/expected/ (\@>) /monadic/@    | The actual result must be less        |
+  -- +---------------------------------+ than the given upper bound.           |
+  -- | @/expected/ (\@>-) /expr/@      |                                       |
+  -- +---------------------------------+---------------------------------------+
+  -- | @/expected/ (\@<=) /monadic/@   | The actual result must be greater     |
+  -- +---------------------------------+ than or equal to the given lower      |
+  -- | @/expected/ (\@<=-) /expr/@     | bound.                                |
+  -- +---------------------------------+---------------------------------------+
+  -- | @/expected/ (\@>=) /monadic/@   | The actual result must be less than   |
+  -- +---------------------------------+ or equal to the given upper bound.    |
+  -- | @/expected/ (\@>=-) /expr/@     |                                       |
+  -- +---------------------------------+---------------------------------------+
+  -- | @empty /monadic/@               | The actual result must be an empty    |
+  -- +---------------------------------+ `Traversable` structure.              |
+  -- | @emptyP /expr/@                 |                                       |
+  -- +---------------------------------+---------------------------------------+
+  -- | @nonempty /monadic/@            | The actual result must be a nonempty  |
+  -- +---------------------------------+ `Traversable` structure.              |
+  -- | @nonemptyP /expr/@              |                                       |
+  -- +---------------------------------+---------------------------------------+
+  -- | @nothing /monadic/@             | The actual result must be `Nothing`   |
+  -- +---------------------------------+ (in a `Maybe`-typed value)            |
+  -- | @nothingP /expr/@               |                                       |
+  -- +---------------------------------+---------------------------------------+
+  -- | @assertFailed /message/@        | Trivial assertions, intended for the  |
+  -- +---------------------------------+ less interesting branches of          |
+  -- | @assertSuccess@                 | conditional and selection expressions.|
+  -- +---------------------------------+---------------------------------------+
   --
   -- Note that although the assertions are in pairs of one for testing
   -- a pure expression value, and one for testing the result returned
@@ -143,16 +148,16 @@ module Test.TLT (
   -- >   "2 is 2 as single Bool" ~::- 2 == 2
   -- >   inGroup "== assertions" $ do
   -- >     inGroup "pure" $ do
-  -- >       "2 is 3 as pure assertion" ~: 2 !==- 3
-  -- >       "2 is 2 as pure assertion" ~: 2 !==- 2
+  -- >       "2 is 3 as pure assertion" ~: 2 @==- 3
+  -- >       "2 is 2 as pure assertion" ~: 2 @==- 2
   -- >     inGroup "monadic" $ do
-  -- >       "2 is 3 as result" ~: 2 !== return 3
-  -- >       "2 is 2 as result" ~: 2 !== return 2
+  -- >       "2 is 3 as result" ~: 2 @== return 3
+  -- >       "2 is 2 as result" ~: 2 @== return 2
   -- >   inGroup "/= pure assertions" $ do
-  -- >     "2 not 3" ~: 2 !/=- 3
-  -- >     "2 not 2" ~: 2 !/=- 2
-  -- >   "2 not 3 as result" ~: 2 !/= return 3
-  -- >   "2 not 2 as result" ~: 2 !/= return 2
+  -- >     "2 not 3" ~: 2 @/=- 3
+  -- >     "2 not 2" ~: 2 @/=- 2
+  -- >   "2 not 3 as result" ~: 2 @/= return 3
+  -- >   "2 not 2 as result" ~: 2 @/= return 2
   --
   -- Running these tests should give:
   --
@@ -231,7 +236,7 @@ module Test.TLT (
   -- top transformer @m@ and the monadic type @n@ directly wrapped by
   -- `TLT` within @m@), and @UndecidableInstances@ (because @n@ is not
   -- smaller in the recursive context of `MonadTLT`, which is not
-  -- actually a problem because in the definition of `MonadTLT1`, @n@
+  -- actually a problem because in the definition of `MonadTLT`, @n@
   -- is functionally dependent on @m@, which /is/ smaller in the
   -- recursive context) in the module where the `MonadTLT` instance is
   -- declared.
@@ -243,12 +248,12 @@ module Test.TLT (
   -- >   runM2T $ inGroup "M2T tests" $ m2tests
   -- >
   -- > m1tests = M1T $ do
-  -- >   "3 is 3 as pure assertion" ~: 3 !==- 3
-  -- >   "4 is 4 as pure assertion" ~: 4 !==- 4
+  -- >   "3 is 3 as pure assertion" ~: 3 @==- 3
+  -- >   "4 is 4 as pure assertion" ~: 4 @==- 4
   -- >
   -- > m2tests = M2T $ do
-  -- >   "5 is 5 as pure assertion" ~: 5 !==- 5
-  -- >   "6 is 6 as pure assertion" ~: 6 !==- 6
+  -- >   "5 is 5 as pure assertion" ~: 5 @==- 5
+  -- >   "6 is 6 as pure assertion" ~: 6 @==- 6
   --
   -- It is not necessary to, for example, harvest test declarations
   -- from the executions of the @MnT@s for assembly into an overall
@@ -263,8 +268,8 @@ module Test.TLT (
   -- ** `TLT` commands
   (~:), (~::), (~::-), tltFail, inGroup,
   -- ** Assertions
-  (!==),  (!/=),  (!<),  (!>),  (!<=),  (!>=),
-  (!==-), (!/=-), (!<-), (!>-), (!<=-), (!>=-),
+  (@==),  (@/=),  (@<),  (@>),  (@<=),  (@>=),
+  (@==-), (@/=-), (@<-), (@>-), (@<=-), (@>=-),
   empty, nonempty, nothing, emptyP, nonemptyP, nothingP,
   assertFailed, assertSuccess,
   -- ** Building new assertions
@@ -573,8 +578,8 @@ s ~:: bM = do
   liftTLT $ TLT $ put (opts, addResult oldState $ Test s $
         if b then [] else [Asserted $ "Expected True but got False"])
 
-infix 1 !==,  !/=,  !<,  !>,  !<=,  !>=
-infix 1 !==-, !/=-, !<-, !>-, !<=-, !>=-
+infix 1 @==,  @/=,  @<,  @>,  @<=,  @>=
+infix 1 @==-, @/=-, @<-, @>-, @<=-, @>=-
 
 -- |Transform a binary function on an expected and an actual value
 -- (plus a binary generator of a failure message) into an `Assertion`
@@ -603,67 +608,67 @@ liftAssertion2M tester explainer exp actualM =
         assertPure actual
 
 -- |Assert that two values are equal.
-(!==-) :: (Monad m, Eq a, Show a) => a -> a -> Assertion m
-(!==-) = liftAssertion2Pure (==) $
+(@==-) :: (Monad m, Eq a, Show a) => a -> a -> Assertion m
+(@==-) = liftAssertion2Pure (==) $
   \ exp actual -> "Expected " ++ show exp ++ " but got " ++ show actual
 
 -- |Assert that a calculated value is as expected.
-(!==) :: (Monad m, Eq a, Show a) => a -> m a -> Assertion m
-(!==) = assertion2PtoM (!==-)
+(@==) :: (Monad m, Eq a, Show a) => a -> m a -> Assertion m
+(@==) = assertion2PtoM (@==-)
 
 -- |Assert that two values are not equal.
-(!/=-) :: (Monad m, Eq a, Show a) => a -> a -> Assertion m
-(!/=-) = liftAssertion2Pure (/=) $
+(@/=-) :: (Monad m, Eq a, Show a) => a -> a -> Assertion m
+(@/=-) = liftAssertion2Pure (/=) $
   \ exp actual ->
     "Expected other than " ++ show exp ++ " but got " ++ show actual
 
 -- |Assert that a calculated value differs from some known value.
-(!/=) :: (Monad m, Eq a, Show a) => a -> m a -> Assertion m
-(!/=) = assertion2PtoM (!/=-)
+(@/=) :: (Monad m, Eq a, Show a) => a -> m a -> Assertion m
+(@/=) = assertion2PtoM (@/=-)
 
 -- |Assert that a given boundary is strictly less than some value.
-(!<-) :: (Monad m, Ord a, Show a) => a -> a -> Assertion m
-(!<-) = liftAssertion2Pure (<) $
+(@<-) :: (Monad m, Ord a, Show a) => a -> a -> Assertion m
+(@<-) = liftAssertion2Pure (<) $
   \ exp actual ->
     "Lower bound (open) is " ++ show exp ++ " but got " ++ show actual
 
 -- |Assert that a given, constant boundary is strictly less than some
 -- calculated value.
-(!<) :: (Monad m, Ord a, Show a) => a -> m a -> Assertion m
-(!<) = assertion2PtoM (!<-)
+(@<) :: (Monad m, Ord a, Show a) => a -> m a -> Assertion m
+(@<) = assertion2PtoM (@<-)
 
 -- |Assert that a given boundary is strictly less than some value.
-(!>-) :: (Monad m, Ord a, Show a) => a -> a -> Assertion m
-(!>-) = liftAssertion2Pure (>) $
+(@>-) :: (Monad m, Ord a, Show a) => a -> a -> Assertion m
+(@>-) = liftAssertion2Pure (>) $
   \ exp actual ->
     "Upper bound (open) is " ++ show exp ++ " but got " ++ show actual
 
 -- |Assert that a given, constant boundary is strictly less than some
 -- calculated value.
-(!>) :: (Monad m, Ord a, Show a) => a -> m a -> Assertion m
-(!>) = assertion2PtoM (!>-)
+(@>) :: (Monad m, Ord a, Show a) => a -> m a -> Assertion m
+(@>) = assertion2PtoM (@>-)
 
 -- |Assert that a given boundary is strictly less than some value.
-(!<=-) :: (Monad m, Ord a, Show a) => a -> a -> Assertion m
-(!<=-) = liftAssertion2Pure (<=) $
+(@<=-) :: (Monad m, Ord a, Show a) => a -> a -> Assertion m
+(@<=-) = liftAssertion2Pure (<=) $
   \ exp actual ->
     "Lower bound (closed) is " ++ show exp ++ " but got " ++ show actual
 
 -- |Assert that a given, constant boundary is strictly less than some
 -- calculated value.
-(!<=) :: (Monad m, Ord a, Show a) => a -> m a -> Assertion m
-(!<=) = assertion2PtoM (!<=-)
+(@<=) :: (Monad m, Ord a, Show a) => a -> m a -> Assertion m
+(@<=) = assertion2PtoM (@<=-)
 
 -- |Assert that a given boundary is strictly less than some value.
-(!>=-) :: (Monad m, Ord a, Show a) => a -> a -> Assertion m
-(!>=-) = liftAssertion2Pure (>=) $
+(@>=-) :: (Monad m, Ord a, Show a) => a -> a -> Assertion m
+(@>=-) = liftAssertion2Pure (>=) $
   \ exp actual ->
     "Upper bound (closed) is " ++ show exp ++ " but got " ++ show actual
 
 -- |Assert that a given, constant boundary is strictly less than some
 -- calculated value.
-(!>=) :: (Monad m, Ord a, Show a) => a -> m a -> Assertion m
-(!>=) = assertion2PtoM (!>=-)
+(@>=) :: (Monad m, Ord a, Show a) => a -> m a -> Assertion m
+(@>=) = assertion2PtoM (@>=-)
 
 -- |This assertion always fails with the given message.
 assertFailed :: Monad m => String -> Assertion m

@@ -11,13 +11,13 @@ test = do
   "2 is 2 as single Bool" ~::- 2 == 2
   inGroup "== assertions" $ do
     inGroup "pure" $ do
-      "2 is 3 as pure assertion" ~: 2 !==- 3
-      "2 is 2 as pure assertion" ~: 2 !==- 2
+      "2 is 3 as pure assertion" ~: 2 @==- 3
+      "2 is 2 as pure assertion" ~: 2 @==- 2
     inGroup "monadic" $ do
-      "2 is 3 as result" ~: 2 !== return 3
-      "2 is 2 as result" ~: 2 !== return 2
+      "2 is 3 as result" ~: 2 @== return 3
+      "2 is 2 as result" ~: 2 @== return 2
   inGroup "/= pure assertions" $ do
-    "2 not 3" ~: 2 !/=- 3
-    "2 not 2" ~: 2 !/=- 2
-  "2 not 3 as result" ~: 2 !/= return 3
-  "2 not 2 as result" ~: 2 !/= return 2
+    "2 not 3" ~: 2 @/=- 3
+    "2 not 2" ~: 2 @/=- 2
+  "2 not 3 as result" ~: 2 @/= return 3
+  "2 not 2 as result" ~: 2 @/= return 2
