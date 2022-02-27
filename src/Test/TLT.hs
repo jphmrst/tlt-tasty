@@ -12,7 +12,7 @@ intermediate results of computations in monad transformers.  It is
 intended to be lightweight for the programmer, and does not require
 tests to be specified is some sort of formal list of tests.  Rather,
 tests are simply commands in a monad stack which includes the
-@Test.TLT@ transformer layer.  This Haddock page is the main piece of
+transformer layer @Test.TLT@.  This Haddock page is the main piece of
 documentation; or see also the GitHub repository
 <https://github.com/jphmrst/TLT/>.
 
@@ -55,38 +55,45 @@ module Test.TLT (
   -- right-hand side of @~:@ should be an `Assertion` formed with one
   -- of TLT's built-in assertion operators, or returned from a
   -- package's custom assertions.  `Assertion`s can give more detailed
-  -- failure information then simple `Bool`s.  A hyphen or @P@
-  -- suffixes assertion operators which operate on pure values instead
-  -- of the results of monadic computations (as with @~::@ and
-  -- @~::-@).  Syntactically, most assertions start with a @\@@ character.
+  -- failure information then simple `Bool`s.
+  --
+  -- Syntactically, most assertions are infix operators which start
+  -- with a @\@@ character.  The value to the left of the operator is
+  -- the expected value, and the symbol to the right is (or returns)
+  -- the value under test.  A hyphen or @P@ suffixes assertion
+  -- operators which operate on pure values; for operators without the
+  -- trailing hyphen, the value under test should is expected to be
+  -- returned as the result of a monadic computation (as with @~::@
+  -- and @~::-@).
+  --
   -- TLT provides these assertion operators:
   --
   -- +---------------------------------+---------------------------------------+
   -- | Operator                        | Meaning                               |
   -- +=================================+=======================================+
-  -- | @/expected/ (\@==) /monadic/@   | The actual result must be equal       |
+  -- | @/expected/ \@== /monadic/@     | The actual result must be equal       |
   -- +---------------------------------+ to the given expected result.         |
-  -- | @/expected/ (\@==-) /expr/@     |                                       |
+  -- | @/expected/ \@==- /expr/@       |                                       |
   -- +---------------------------------+---------------------------------------+
-  -- | @/unexpected/ (\@\/=) /monadic/@| The actual result must differ         |
+  -- | @/unexpected/ \@\/= /monadic/@  | The actual result must differ         |
   -- +---------------------------------+ from the given unexpected result.     |
-  -- | @/unexpected/ (\@\/=-) /expr/@  |                                       |
+  -- | @/unexpected/ \@\/=- /expr/@    |                                       |
   -- +---------------------------------+---------------------------------------+
-  -- | @/expected/ (\@<) /monadic/@    | The actual result must be greater     |
+  -- | @/expected/ \@< /monadic/@      | The actual result must be greater     |
   -- +---------------------------------+ than the given lower bound.           |
-  -- | @/expected/ (\@<-) /expr/@      |                                       |
+  -- | @/expected/ \@<- /expr/@        |                                       |
   -- +---------------------------------+---------------------------------------+
-  -- | @/expected/ (\@>) /monadic/@    | The actual result must be less        |
+  -- | @/expected/ \@> /monadic/@      | The actual result must be less        |
   -- +---------------------------------+ than the given upper bound.           |
-  -- | @/expected/ (\@>-) /expr/@      |                                       |
+  -- | @/expected/ \@>- /expr/@        |                                       |
   -- +---------------------------------+---------------------------------------+
-  -- | @/expected/ (\@<=) /monadic/@   | The actual result must be greater     |
+  -- | @/expected/ \@<= /monadic/@     | The actual result must be greater     |
   -- +---------------------------------+ than or equal to the given lower      |
-  -- | @/expected/ (\@<=-) /expr/@     | bound.                                |
+  -- | @/expected/ \@<=- /expr/@       | bound.                                |
   -- +---------------------------------+---------------------------------------+
-  -- | @/expected/ (\@>=) /monadic/@   | The actual result must be less than   |
+  -- | @/expected/ \@>= /monadic/@     | The actual result must be less than   |
   -- +---------------------------------+ or equal to the given upper bound.    |
-  -- | @/expected/ (\@>=-) /expr/@     |                                       |
+  -- | @/expected/ \@>=- /expr/@       |                                       |
   -- +---------------------------------+---------------------------------------+
   -- | @empty /monadic/@               | The actual result must be an empty    |
   -- +---------------------------------+ `Traversable` structure.              |
@@ -301,7 +308,11 @@ import System.Exit
 -- * Results of tests
 
 -- |Reasons why a test might fail
-data TestFail = Asserted String | Erred
+data TestFail = Asserted String
+                -- ^ A failure arising from an `Assertion` which is not met.
+              | Erred
+                -- ^ A failure associated with a call to a Haskell
+                -- function triggering an error.
 
 formatFail :: TestFail -> String
 formatFail (Asserted s) = s

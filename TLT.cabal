@@ -6,7 +6,7 @@ cabal-version: 1.12
 
 name:           TLT
 version:        0.1.0.0
-synopsis:       Testing focused on computations in monad transformers.
+synopsis:       Tests without separate specs for monads and transformers.
 description:    A small unit test system oriented with an emphasis on examining intermediate results of computations in monad transformers.  The Test.TLT Haddock page is the main piece of documentation; or see also the GitHub repository <https://github.com/jphmrst/TLT/>.
 category:       Test
 homepage:       https://github.com/jphmrst/TLT#readme

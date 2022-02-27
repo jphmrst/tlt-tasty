@@ -6,7 +6,7 @@ author:              "John Maraist"
 maintainer:          "haskell-tlt@maraist.org"
 copyright:           "2022 John Maraist"
 category:	     Test
-synopsis:	     "Testing focused on computations in monad transformers."
+synopsis:	     "Tests without separate specs for monads and transformers."
 description:	     "A small unit test system oriented with an emphasis on examining intermediate results of computations in monad transformers.  The Test.TLT Haddock page is the main piece of documentation; or see also the GitHub repository <https://github.com/jphmrst/TLT/>."
 
 extra-source-files:
