@@ -567,6 +567,13 @@ inGroup name group = do
 infix 0 ~:, ~::, ~::-
 
 -- |Label and perform a test of an `Assertion`.
+--
+-- ===== Example
+--
+-- > test :: Monad m => TLT m ()
+-- > test = do
+-- >   "2 is 2 as result" ~: 2 @== return 2    -- This test passes.
+-- >   "2 not 3" ~: 2 @/=- 3                   -- This test fails.
 (~:) :: MonadTLT m n => String -> Assertion m -> m ()
 s ~: a = do
   (opts, oldState) <- liftTLT $ TLT $ get
@@ -574,6 +581,16 @@ s ~: a = do
   liftTLT $ TLT $ put (opts, addResult oldState $ Test s assessment)
 
 -- |Label and perform a test of a (pure) boolean value.
+--
+-- ===== Example
+--
+-- > test :: Monad m => TLT m ()
+-- > test = do
+-- >   "True passes" ~::- return True                 -- This test passes.
+-- >   "2 is 2 as single Bool" ~::- return (2 == 2)   -- This test passes.
+-- >   "2 is 3!?" ~::- myFn 4 "Hammer"                -- Passes if myFn (which
+-- >                                                  -- must be monadic)
+-- >                                                  -- returns True.
 (~::-) :: MonadTLT m n => String -> Bool -> m ()
 s ~::- b = do
   (opts, oldState) <- liftTLT $ TLT $ get
@@ -582,6 +599,14 @@ s ~::- b = do
 
 -- |Label and perform a test of a boolean value returned by a
 -- computation in the wrapped monad @m@.
+--
+-- ===== Example
+--
+-- > test :: Monad m => TLT m ()
+-- > test = do
+-- >   "True passes" ~::- True               -- This test passes.
+-- >   "2 is 2 as single Bool" ~::- 2 == 2   -- This test passes.
+-- >   "2 is 3!?" ~::- 2 == 2                -- This test fails.
 (~::) :: MonadTLT m n => String -> m Bool -> m ()
 s ~:: bM = do
   b <- bM
@@ -595,6 +620,20 @@ infix 1 @==-, @/=-, @<-, @>-, @<=-, @>=-
 -- |Transform a binary function on an expected and an actual value
 -- (plus a binary generator of a failure message) into an `Assertion`
 -- for a pure given actual value.
+--
+-- ===== Example
+--
+-- TLT's scalar-testing operators like @\@==-@ are defined with this
+-- function:
+--
+-- > (@==-) :: (Monad m, Eq a, Show a) => a -> a -> Assertion m
+-- > (@==-) = liftAssertion2Pure (==) $
+-- >   \ exp actual -> "Expected " ++ show exp ++ " but got " ++ show actual
+--
+-- The `(==)` operator tests equality, and the result here allows the
+-- assertion that a value should be exactly equal to a target.  The
+-- second argument formats the detail reported when the assertion
+-- fails.
 liftAssertion2Pure ::
   (Monad m) => (a -> a -> Bool) -> (a -> a -> String) -> a -> a -> Assertion m
 liftAssertion2Pure tester explainer exp actual = return $
