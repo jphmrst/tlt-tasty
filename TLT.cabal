@@ -40,7 +40,7 @@ library
       HUnit >=1.6.2 && <1.7
     , STMonadTrans >=0.4.6 && <0.5
     , ansi-terminal >=0.11.1 && <0.12
-    , base >=4.13.0 && <4.15
+    , base (>=4.14.3 && <4.15) || ==4.15.1 || ==4.16.0
     , either >=5.0.1 && <5.1
     , free >=5.1.7 && <5.2
     , mtl >=2.2.2 && <2.3
@@ -61,7 +61,7 @@ executable TLT-exe
     , STMonadTrans >=0.4.6 && <0.5
     , TLT
     , ansi-terminal >=0.11.1 && <0.12
-    , base >=4.13.0 && <4.15
+    , base (>=4.14.3 && <4.15) || ==4.15.1 || ==4.16.0
     , either >=5.0.1 && <5.1
     , free >=5.1.7 && <5.2
     , mtl >=2.2.2 && <2.3
@@ -83,7 +83,7 @@ test-suite TLT-test-fail
     , STMonadTrans >=0.4.6 && <0.5
     , TLT
     , ansi-terminal >=0.11.1 && <0.12
-    , base >=4.13.0 && <4.15
+    , base (>=4.14.3 && <4.15) || ==4.15.1 || ==4.16.0
     , either >=5.0.1 && <5.1
     , free >=5.1.7 && <5.2
     , mtl >=2.2.2 && <2.3
@@ -91,5 +91,3 @@ test-suite TLT-test-fail
     , symbol >=0.2.4 && <0.3
     , transformers >=0.5.6 && <0.6
   default-language: Haskell2010
-
- 
