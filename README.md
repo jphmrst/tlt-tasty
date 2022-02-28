@@ -20,78 +20,78 @@ also to be tested.
 
 In TLT, all tests are associated with a string which names or
 otherwise describes the test.  Each test is introduced with one of the
-@~:@, @~::@, or @~::-@ infix operators.
+`~:`, `~::`, or `~::-` infix operators.
 
 The simplest tests simply look for a `True` boolean value.  These
-tests are introduced with @~::@ or @~::-@.  The difference between the
+tests are introduced with `~::` or `~::-`.  The difference between the
 two is whether the boolean value is the result of a pure `Bool`
 expression, or whether it is returned as the result of a computation.
 In TLT, we distinguish between the two cases by including a trailing
-hyphen @-@ to operators on pure expressions, and omitting the hyphen
+hyphen `-` to operators on pure expressions, and omitting the hyphen
 from operators on monadic arguments.  So these two tests will both
 pass,
 
     "2 is 2 as single Bool" ~::- 2 == 2
     "2 is 2 a returned Bool" ~:: return $ 2 == 2
 
-The @~:@ operator introduces a more general form of test.  The
-right-hand side of @~:@ should be an `Assertion` formed with one of
+The `~:` operator introduces a more general form of test.  The
+right-hand side of `~:` should be an `Assertion` formed with one of
 TLT's built-in assertion operators, or returned from a package's
 custom assertions.  `Assertion`s can give more detailed failure
 information then simple `Bool`s.
 
 Syntactically, most assertions are infix operators which start with a
-@\@@ character.  The value to the left of the operator is the expected
+`\@` character.  The value to the left of the operator is the expected
 value, and the symbol to the right is (or returns) the value under
-test.  A hyphen or @P@ suffixes assertion operators which operate on
+test.  A hyphen or `P` suffixes assertion operators which operate on
 pure values; for operators without the trailing hyphen, the value
 under test should is expected to be returned as the result of a
-monadic computation (as with @~::@ and @~::-@).
+monadic computation (as with `~::` and `~::-`).
 
 TLT provides these assertion operators:
 
 +---------------------------------+---------------------------------------+
 | Operator                        | Meaning                               |
 +=================================+=======================================+
-| @/expected/ \@== /monadic/@     | The actual result must be equal       |
+| `/expected/ \@== /monadic/`     | The actual result must be equal       |
 +---------------------------------+ to the given expected result.         |
-| @/expected/ \@==- /expr/@       |                                       |
+| `/expected/ \@==- /expr/`       |                                       |
 +---------------------------------+---------------------------------------+
-| @/unexpected/ \@\/= /monadic/@  | The actual result must differ         |
+| `/unexpected/ \@\/= /monadic/`  | The actual result must differ         |
 +---------------------------------+ from the given unexpected result.     |
-| @/unexpected/ \@\/=- /expr/@    |                                       |
+| `/unexpected/ \@\/=- /expr/`    |                                       |
 +---------------------------------+---------------------------------------+
-| @/expected/ \@< /monadic/@      | The actual result must be greater     |
+| `/expected/ \@< /monadic/`      | The actual result must be greater     |
 +---------------------------------+ than the given lower bound.           |
-| @/expected/ \@<- /expr/@        |                                       |
+| `/expected/ \@<- /expr/`        |                                       |
 +---------------------------------+---------------------------------------+
-| @/expected/ \@    /monadic/@      | The actual result must be less        |
+| `/expected/ \@    /monadic/`      | The actual result must be less        |
 +---------------------------------+ than the given upper bound.           |
-| @/expected/ \@>- /expr/@        |                                       |
+| `/expected/ \@>- /expr/`        |                                       |
 +---------------------------------+---------------------------------------+
-| @/expected/ \@<= /monadic/@     | The actual result must be greater     |
+| `/expected/ \@<= /monadic/`     | The actual result must be greater     |
 +---------------------------------+ than or equal to the given lower      |
-| @/expected/ \@<=- /expr/@       | bound.                                |
+| `/expected/ \@<=- /expr/`       | bound.                                |
 +---------------------------------+---------------------------------------+
-| @/expected/ \@>= /monadic/@     | The actual result must be less than   |
+| `/expected/ \@>= /monadic/`     | The actual result must be less than   |
 +---------------------------------+ or equal to the given upper bound.    |
-| @/expected/ \@>=- /expr/@       |                                       |
+| `/expected/ \@>=- /expr/`       |                                       |
 +---------------------------------+---------------------------------------+
-| @empty /monadic/@               | The actual result must be an empty    |
+| `empty /monadic/`               | The actual result must be an empty    |
 +---------------------------------+ `Traversable` structure.              |
-| @emptyP /expr/@                 |                                       |
+| `emptyP /expr/`                 |                                       |
 +---------------------------------+---------------------------------------+
-| @nonempty /monadic/@            | The actual result must be a nonempty  |
+| `nonempty /monadic/`            | The actual result must be a nonempty  |
 +---------------------------------+ `Traversable` structure.              |
-| @nonemptyP /expr/@              |                                       |
+| `nonemptyP /expr/`              |                                       |
 +---------------------------------+---------------------------------------+
-| @nothing /monadic/@             | The actual result must be `Nothing`   |
+| `nothing /monadic/`             | The actual result must be `Nothing`   |
 +---------------------------------+ (in a `Maybe`-typed value)            |
-| @nothingP /expr/@               |                                       |
+| `nothingP /expr/`               |                                       |
 +---------------------------------+---------------------------------------+
-| @assertFailed /message/@        | Trivial assertions, intended for the  |
+| `assertFailed /message/`        | Trivial assertions, intended for the  |
 +---------------------------------+ less interesting branches of          |
-| @assertSuccess@                 | conditional and selection expressions.|
+| `assertSuccess`                 | conditional and selection expressions.|
 +---------------------------------+---------------------------------------+
 
 Note that although the assertions are in pairs of one for testing a
@@ -114,7 +114,7 @@ which transform one form of `Assertion` into another.
 # Examples
 
 These examples are from the sample executables and test suite of
-the @TLT@ package.
+the `TLT` package.
 
 ## A simple example
 
@@ -158,8 +158,8 @@ Running these tests should give:
     Found 5 errors in 11 tests; exiting
 
 Note that only failing tests appear.  This can be configured in the
-@test@ command: add a call at the beginning of @test@ to
-@reportAllTestResults@ to control this behavior:
+`test` command: add a call at the beginning of `test` to
+`reportAllTestResults` to control this behavior:
 
     test :: Monad m =    TLT m ()
     test = do
@@ -196,7 +196,7 @@ level is easiest when all of the transformers which might wrap it
 are declared as instances of `MonadTLT`.
 
 Consider an application which declares two monad transformers
-@M1T@ and @M2T@.  For simplicity here we take them to be just
+`M1T` and `M2T`.  For simplicity here we take them to be just
 aliases for `IdentityT`:
 
     newtype Monad m =    M1T m a = M1T { unwrap1 :: IdentityT m a }
@@ -214,14 +214,14 @@ declare instances of each in `MonadTLT`,
     instance MonadTLT m n =    MonadTLT (M1T m) n where
       liftTLT = lift . liftTLT
 
-and similarly for @M2T@.  Note that this declaration does require
-@FlexibleInstances@ (because @n@ does not appear in the instance
-type), @MultiParamTypeClasses@ (because we must mention both the top
-transformer @m@ and the monadic type @n@ directly wrapped by `TLT`
-within @m@), and @UndecidableInstances@ (because @n@ is not smaller in
+and similarly for `M2T`.  Note that this declaration does require
+`FlexibleInstances` (because `n` does not appear in the instance
+type), `MultiParamTypeClasses` (because we must mention both the top
+transformer `m` and the monadic type `n` directly wrapped by `TLT`
+within `m`), and `UndecidableInstances` (because `n` is not smaller in
 the recursive context of `MonadTLT`, which is not actually a problem
-because in the definition of `MonadTLT`, @n@ is functionally dependent
-on @m@, which /is/ smaller in the recursive context) in the module
+because in the definition of `MonadTLT`, `n` is functionally dependent
+on `m`, which /is/ smaller in the recursive context) in the module
 where the `MonadTLT` instance is declared.
 
 Now it is convenient to test both transformers:
@@ -239,6 +239,6 @@ Now it is convenient to test both transformers:
       "6 is 6 as pure assertion" ~: 6 @==- 6
 
 It is not necessary, for example, to harvest test declarations
-from the executions of the @MnT@s for assembly into an overall
+from the executions of the `MnT`s for assembly into an overall
 test declaration.
 
