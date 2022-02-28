@@ -10,11 +10,12 @@ Portability : POSIX
 TLT is a small unit test system oriented towards examining
 intermediate results of computations in monad transformers.  It is
 intended to be lightweight for the programmer, and does not require
-tests to be specified is some sort of formal list of tests.  Rather,
+tests to be specified in some sort of formal list of tests.  Rather,
 tests are simply commands in a monad stack which includes the
-transformer layer @Test.TLT@.  This Haddock page is the main piece of
-documentation; or see also the GitHub repository
-<https://github.com/jphmrst/TLT/>.
+transformer layer @Test.TLT@.
+
+This Haddock page is the main piece of documentation; or see also the
+GitHub repository <https://github.com/jphmrst/TLT/>.
 
 -}
 
@@ -262,7 +263,7 @@ module Test.TLT (
   -- >   "5 is 5 as pure assertion" ~: 5 @==- 5
   -- >   "6 is 6 as pure assertion" ~: 6 @==- 6
   --
-  -- It is not necessary to, for example, harvest test declarations
+  -- It is not necessary, for example, to harvest test declarations
   -- from the executions of the @MnT@s for assembly into an overall
   -- test declaration.
 
