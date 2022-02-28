@@ -7,7 +7,7 @@ Tests can live in an arbitrary monad transformer so long as the `TLT`
 transformer is part of the stack.  Some control of the results display
 is available.
 
-See the TLT Haddock page for instructions and examples.
+See also the TLT Haddock page for additional examples.
 
 # Overview
 
@@ -41,7 +41,7 @@ custom assertions.  `Assertion`s can give more detailed failure
 information then simple `Bool`s.
 
 Syntactically, most assertions are infix operators which start with a
-`\@` character.  The value to the left of the operator is the expected
+`@` character.  The value to the left of the operator is the expected
 value, and the symbol to the right is (or returns) the value under
 test.  A hyphen or `P` suffixes assertion operators which operate on
 pure values; for operators without the trailing hyphen, the value
@@ -50,49 +50,37 @@ monadic computation (as with `~::` and `~::-`).
 
 TLT provides these assertion operators:
 
-+---------------------------------+---------------------------------------+
-| Operator                        | Meaning                               |
-+=================================+=======================================+
-| `/expected/ \@== /monadic/`     | The actual result must be equal       |
-+---------------------------------+ to the given expected result.         |
-| `/expected/ \@==- /expr/`       |                                       |
-+---------------------------------+---------------------------------------+
-| `/unexpected/ \@\/= /monadic/`  | The actual result must differ         |
-+---------------------------------+ from the given unexpected result.     |
-| `/unexpected/ \@\/=- /expr/`    |                                       |
-+---------------------------------+---------------------------------------+
-| `/expected/ \@< /monadic/`      | The actual result must be greater     |
-+---------------------------------+ than the given lower bound.           |
-| `/expected/ \@<- /expr/`        |                                       |
-+---------------------------------+---------------------------------------+
-| `/expected/ \@    /monadic/`      | The actual result must be less        |
-+---------------------------------+ than the given upper bound.           |
-| `/expected/ \@>- /expr/`        |                                       |
-+---------------------------------+---------------------------------------+
-| `/expected/ \@<= /monadic/`     | The actual result must be greater     |
-+---------------------------------+ than or equal to the given lower      |
-| `/expected/ \@<=- /expr/`       | bound.                                |
-+---------------------------------+---------------------------------------+
-| `/expected/ \@>= /monadic/`     | The actual result must be less than   |
-+---------------------------------+ or equal to the given upper bound.    |
-| `/expected/ \@>=- /expr/`       |                                       |
-+---------------------------------+---------------------------------------+
-| `empty /monadic/`               | The actual result must be an empty    |
-+---------------------------------+ `Traversable` structure.              |
-| `emptyP /expr/`                 |                                       |
-+---------------------------------+---------------------------------------+
-| `nonempty /monadic/`            | The actual result must be a nonempty  |
-+---------------------------------+ `Traversable` structure.              |
-| `nonemptyP /expr/`              |                                       |
-+---------------------------------+---------------------------------------+
-| `nothing /monadic/`             | The actual result must be `Nothing`   |
-+---------------------------------+ (in a `Maybe`-typed value)            |
-| `nothingP /expr/`               |                                       |
-+---------------------------------+---------------------------------------+
-| `assertFailed /message/`        | Trivial assertions, intended for the  |
-+---------------------------------+ less interesting branches of          |
-| `assertSuccess`                 | conditional and selection expressions.|
-+---------------------------------+---------------------------------------+
+| Operator                       | Meaning                               |
+| ------------------------------ | ------------------------------------- |
+| `/expected/ @== /monadic/`     | The actual result must be equal to the given expected result.       |
+| `/expected/ @==- /expr/`       |                                       |
+| ------------------------------ | ------------------------------------- |
+| `/unexpected/ @\/= /monadic/`  | The actual result must differ from the given unexpected result.        |
+| `/unexpected/ @\/=- /expr/`    |                                       |
+| ------------------------------ | ------------------------------------- |
+| `/expected/ @< /monadic/`      | The actual result must be greater than the given lower bound.  |
+| `/expected/ @<- /expr/`        |                                       |
+| ------------------------------ | ------------------------------------- |
+| `/expected/ @    /monadic/`    | The actual result must be less than the given upper bound.        |
+| `/expected/ @>- /expr/`        |                                       |
+| ------------------------------ | ------------------------------------- |
+| `/expected/ @<= /monadic/`     | The actual result must be greater than or equal to the given lower bound.     |
+| `/expected/ @<=- /expr/`       |                                 |
+| ------------------------------ | ------------------------------------- |
+| `/expected/ @>= /monadic/`     | The actual result must be less than or equal to the given upper bound.   |
+| `/expected/ @>=- /expr/`       |                                       |
+| ------------------------------ | ------------------------------------- |
+| `empty /monadic/`              | The actual result must be an empty `Traversable` structure.    |
+| `emptyP /expr/`                |                                       |
+| ------------------------------ | ------------------------------------- |
+| `nonempty /monadic/`           | The actual result must be a nonempty `Traversable` structure.  |
+| `nonemptyP /expr/`             |                                       |
+| ------------------------------ | ------------------------------------- |
+| `nothing /monadic/`            | The actual result must be `Nothing` (in a `Maybe`-typed value)   |
+| `nothingP /expr/`              |                                       |
+| ------------------------------ | ------------------------------------- |
+| `assertFailed /message/`       | Trivial assertions, intended for the less interesting branches of conditional and selection expressions.  |
+| `assertSuccess`                | |
 
 Note that although the assertions are in pairs of one for testing a
 pure expression value, and one for testing the result returned from a
