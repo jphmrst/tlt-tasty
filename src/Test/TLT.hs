@@ -292,6 +292,7 @@ module Test.TLT (
   ) where
 
 import Data.Maybe
+import Control.Exception
 import Control.Monad
 import Control.Monad.IO.Class
 import Control.Monad.ST.Trans
@@ -314,13 +315,13 @@ import System.Exit
 -- |Reasons why a test might fail.
 data TestFail = Asserted String
                 -- ^ A failure arising from an `Assertion` which is not met.
-              | Erred
+              | Erred String
                 -- ^ A failure associated with a call to a Haskell
                 -- function triggering an error.
 
 formatFail :: TestFail -> String
 formatFail (Asserted s) = s
-formatFail (Erred) = "Assertion called error"
+formatFail (Erred s) = "Assertion raised exception: " ++ s
 
 -- |An assertion is a computation (typically in the monad wrapped by
 -- `TLT`) which returns a list of zero of more reasons for the failure
@@ -789,10 +790,10 @@ assertSuccess = return []
 --
 -- ===== Example
 --
--- The TLT assertion `emptyP` is built from the `Foldable` predicate
+-- The TLT assertion `emptyP` is built from the `Traversable` predicate
 -- `null`
 --
--- > emptyP :: (Monad m, Foldable t) => t a -> Assertion m
+-- > emptyP :: (Monad m, Traversable t) => t a -> Assertion m
 -- > emptyP = liftAssertionPure null
 -- >            (\ _ -> "Expected empty structure but got non-empty")
 
@@ -810,14 +811,14 @@ liftAssertionPure tester explainer actual = return $
 -- is defined in terms of the corresponging assertion on pure
 -- list-valued expressions.
 --
--- > empty :: (Monad m, Foldable t) => m (t a) -> Assertion m
+-- > empty :: (Monad m, Traversable t) => m (t a) -> Assertion m
 -- > empty = assertionPtoM emptyP
 assertionPtoM :: (Monad m) => (a -> Assertion m) -> m a -> Assertion m
 assertionPtoM pa actualM = do actual <- actualM
                               pa actual
 
--- |Transform a unary function on an actual value (plus a generator
--- of a failure message) into an `Assertion` where the value is to be
+-- |Transform a unary function on an actual value (plus a generator of
+-- a failure message) into an `Assertion` where the value is to be
 -- returned from a subcomputation.
 liftAssertionM ::
   (Monad m) => (a -> Bool) -> (a -> String) -> m a -> Assertion m
@@ -826,24 +827,26 @@ liftAssertionM tester explainer actualM =
   in do actual <- actualM
         assertPure actual
 
--- |Assert that a pure foldable structure (such as a list) is empty.
-emptyP :: (Monad m, Foldable t) => t a -> Assertion m
+-- |Assert that a pure traversable structure (such as a list) is
+-- empty.
+emptyP :: (Monad m, Traversable t) => t a -> Assertion m
 emptyP = liftAssertionPure null
            (\ _ -> "Expected empty structure but got non-empty")
 
--- |Assert that a foldable structure (such as a list) returned from a
--- computation is empty.
-empty :: (Monad m, Foldable t) => m (t a) -> Assertion m
+-- |Assert that a traversable structure (such as a list) returned from
+-- a computation is empty.
+empty :: (Monad m, Traversable t) => m (t a) -> Assertion m
 empty = assertionPtoM emptyP
 
--- |Assert that a pure foldable structure (such as a list) is nonempty.
-nonemptyP :: (Monad m, Foldable t) => t a -> Assertion m
+-- |Assert that a pure traversable structure (such as a list) is
+-- nonempty.
+nonemptyP :: (Monad m, Traversable t) => t a -> Assertion m
 nonemptyP = liftAssertionPure (not . null)
               (\ _ -> "Expected non-empty structure but got empty")
 
--- |Assert that a foldable structure (such as a list) returned from a
--- computation is non-empty.
-nonempty :: (Monad m, Foldable t) => m (t a) -> Assertion m
+-- |Assert that a traversable structure (such as a list) returned from
+-- a computation is non-empty.
+nonempty :: (Monad m, Traversable t) => m (t a) -> Assertion m
 nonempty = assertionPtoM nonemptyP
 
 -- |Assert that a `Maybe` value is `Nothing`.
