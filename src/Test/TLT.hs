@@ -275,10 +275,14 @@ module Test.TLT (
   -- ** `TLT` commands
   (~:), (~::), (~::-), tltFail, inGroup,
   -- ** Assertions
+  -- *** About the values of pure expressions of `Eq`- and `Ord`-type
   (@==),  (@/=),  (@<),  (@>),  (@<=),  (@>=),
+  -- *** About monadic computations returing `Eq`s and `Ord`s
   (@==-), (@/=-), (@<-), (@>-), (@<=-), (@>=-),
-  empty, nonempty, nothing, emptyP, nonemptyP, nothingP,
-  assertFailed, assertSuccess,
+  -- *** About list values
+  empty, nonempty, emptyP, nonemptyP,
+  -- *** About `Maybe` values
+  nothing, nothingP, assertFailed, assertSuccess,
   -- ** Building new assertions
   -- *** Unary assertions
   liftAssertionPure, assertionPtoM, liftAssertionM,
@@ -307,7 +311,7 @@ import System.Exit
 
 -- * Results of tests
 
--- |Reasons why a test might fail
+-- |Reasons why a test might fail.
 data TestFail = Asserted String
                 -- ^ A failure arising from an `Assertion` which is not met.
               | Erred
@@ -328,7 +332,9 @@ type Assertion m = m [TestFail]
 -- possibly grouped into tests.
 data TestResult = Test String [TestFail]
                 | Group String Int Int [TestResult]
-                  -- Ints are resp. total tests, failures
+                  -- ^ The `Int`s are respectively the total number of
+                  -- tests executed, and total number of failures
+                  -- detected.
 
 -- |Return the number of failed tests reported in a `TestResult`.
 failCount :: TestResult -> Int
@@ -462,9 +468,6 @@ type TLTstate = (TLTopts, TRBuf)
 -- from tests as they are executed.
 newtype Monad m => TLT m r = TLT { unwrap :: StateT TLTstate m r }
   deriving (Functor, Applicative, Monad, MonadTrans, MonadIO)
-
--- |Allowing the `TLT` layer to be wrapped by the layers it tests,
--- instead of `TLT` wrapping them.
 
 {- ------------------------------------------------------------ -}
 
@@ -642,6 +645,14 @@ liftAssertion2Pure tester explainer exp actual = return $
 -- |Given an `Assertion` for two pure values (expected and actual),
 -- lift it to an `Assertion` expecting the actual value to be returned
 -- from a computation.
+--
+-- ===== Examples
+--
+-- The TLT assertion `(@==)` lifts `(@==-)` from expecting a pure
+-- actual result to expecting a computation returning a value to test.
+--
+-- > (@==) :: (Monad m, Eq a, Show a) => a -> m a -> Assertion m
+-- > (@==) = assertion2PtoM (@==-)
 assertion2PtoM ::
   (Monad m) => (a -> a -> Assertion m) -> a -> m a -> Assertion m
 assertion2PtoM pa exp actualM = do actual <- actualM
@@ -657,66 +668,110 @@ liftAssertion2M tester explainer exp actualM =
   in do actual <- actualM
         assertPure actual
 
--- |Assert that two values are equal.
+-- |Assert that two values are equal.  This assertion takes an
+-- expected and an actual /value/; see `(@==)` to compare the result
+-- of a /monadic computation/ to an expected value.
+--
+-- ===== Examples
+--
+-- > test :: Monad m => TLT m ()
+-- > test = do
+-- >   "Make sure that 2 is still equal to itself" ~: 2 @==- 2
+-- >   "Make sure that there are four lights" ~: 4 @==- length lights
 (@==-) :: (Monad m, Eq a, Show a) => a -> a -> Assertion m
 (@==-) = liftAssertion2Pure (==) $
   \ exp actual -> "Expected " ++ show exp ++ " but got " ++ show actual
 
--- |Assert that a calculated value is as expected.
+-- |Assert that a calculated value is as expected.  This assertion
+-- compare the result of a /monadic computation/ to an expected value;
+-- see `(@==-)` to compare an /actual value/ to the expected value.
+--
+-- ===== Examples
+--
+-- > test :: Monad m => TLT m ()
+-- > test = do
+-- >   "Make sure that 2 is still equal to itself" ~: 2 @== return 2
+-- >   "Make sure that there are four lights" ~: 4 @== countLights
+-- >                                             -- where countLights :: m Int
 (@==) :: (Monad m, Eq a, Show a) => a -> m a -> Assertion m
 (@==) = assertion2PtoM (@==-)
 
--- |Assert that two values are not equal.
+-- |Assert that two values are not equal.  This assertion takes an
+-- expected and an actual /value/; see `(@/=)` to compare the result
+-- of a /monadic computation/ to an expected value.
 (@/=-) :: (Monad m, Eq a, Show a) => a -> a -> Assertion m
 (@/=-) = liftAssertion2Pure (/=) $
   \ exp actual ->
     "Expected other than " ++ show exp ++ " but got " ++ show actual
 
 -- |Assert that a calculated value differs from some known value.
+-- This assertion compares the result of a /monadic computation/ to an
+-- expected value; see `(@/=-)` to compare an /actual value/ to the
+-- expected value.
 (@/=) :: (Monad m, Eq a, Show a) => a -> m a -> Assertion m
 (@/=) = assertion2PtoM (@/=-)
 
 -- |Assert that a given boundary is strictly less than some value.
+-- This assertion takes an expected and an actual /value/; see `(@<)`
+-- to compare the result of a /monadic computation/ to an expected
+-- value.
 (@<-) :: (Monad m, Ord a, Show a) => a -> a -> Assertion m
 (@<-) = liftAssertion2Pure (<) $
   \ exp actual ->
     "Lower bound (open) is " ++ show exp ++ " but got " ++ show actual
 
 -- |Assert that a given, constant boundary is strictly less than some
--- calculated value.
+-- calculated value.  This assertion compares the result of a /monadic
+-- computation/ to an expected value; see `(@<-)` to compare an
+-- /actual value/ to the expected value.
 (@<) :: (Monad m, Ord a, Show a) => a -> m a -> Assertion m
 (@<) = assertion2PtoM (@<-)
 
 -- |Assert that a given boundary is strictly less than some value.
+-- This assertion takes an expected and an actual /value/; see `(@>)`
+-- to compare the result of a /monadic computation/ to an expected
+-- value.
 (@>-) :: (Monad m, Ord a, Show a) => a -> a -> Assertion m
 (@>-) = liftAssertion2Pure (>) $
   \ exp actual ->
     "Upper bound (open) is " ++ show exp ++ " but got " ++ show actual
 
 -- |Assert that a given, constant boundary is strictly less than some
--- calculated value.
+-- calculated value.  This assertion compares the result of a /monadic
+-- computation/ to an expected value; see `(@>-)` to compare an
+-- /actual value/ to the expected value.
 (@>) :: (Monad m, Ord a, Show a) => a -> m a -> Assertion m
 (@>) = assertion2PtoM (@>-)
 
 -- |Assert that a given boundary is strictly less than some value.
+-- This assertion takes an expected and an actual /value/; see `(@<=)`
+-- to compare the result of a /monadic computation/ to an expected
+-- value.
 (@<=-) :: (Monad m, Ord a, Show a) => a -> a -> Assertion m
 (@<=-) = liftAssertion2Pure (<=) $
   \ exp actual ->
     "Lower bound (closed) is " ++ show exp ++ " but got " ++ show actual
 
 -- |Assert that a given, constant boundary is strictly less than some
--- calculated value.
+-- calculated value.  This assertion compares the result of a /monadic
+-- computation/ to an expected value; see `(@<=-)` to compare an
+-- /actual value/ to the expected value.
 (@<=) :: (Monad m, Ord a, Show a) => a -> m a -> Assertion m
 (@<=) = assertion2PtoM (@<=-)
 
 -- |Assert that a given boundary is strictly less than some value.
+-- This assertion takes an expected and an actual /value/; see `(@>=)`
+-- to compare the result of a /monadic computation/ to an expected
+-- value.
 (@>=-) :: (Monad m, Ord a, Show a) => a -> a -> Assertion m
 (@>=-) = liftAssertion2Pure (>=) $
   \ exp actual ->
     "Upper bound (closed) is " ++ show exp ++ " but got " ++ show actual
 
 -- |Assert that a given, constant boundary is strictly less than some
--- calculated value.
+-- calculated value.  This assertion compares the result of a /monadic
+-- computation/ to an expected value; see `(@>=-)` to compare an
+-- /actual value/ to the expected value.
 (@>=) :: (Monad m, Ord a, Show a) => a -> m a -> Assertion m
 (@>=) = assertion2PtoM (@>=-)
 
@@ -731,6 +786,16 @@ assertSuccess = return []
 -- |Transform a unary function on a value (plus a generator of a
 -- failure message) into a unary function returning an `Assertion` for
 -- a pure given actual value.
+--
+-- ===== Example
+--
+-- The TLT assertion `emptyP` is built from the `Foldable` predicate
+-- `null`
+--
+-- > emptyP :: (Monad m, Foldable t) => t a -> Assertion m
+-- > emptyP = liftAssertionPure null
+-- >            (\ _ -> "Expected empty structure but got non-empty")
+
 liftAssertionPure ::
   (Monad m) => (a -> Bool) -> (a -> String) -> a -> Assertion m
 liftAssertionPure tester explainer actual = return $
@@ -738,6 +803,15 @@ liftAssertionPure tester explainer actual = return $
 
 -- |Given an `Assertion` for a pure (actual) value, lift it to an
 -- `Assertion` expecting the value to be returned from a computation.
+--
+-- ===== Example
+--
+-- The TLT assertion `empty` on monadic computations returning lists
+-- is defined in terms of the corresponging assertion on pure
+-- list-valued expressions.
+--
+-- > empty :: (Monad m, Foldable t) => m (t a) -> Assertion m
+-- > empty = assertionPtoM emptyP
 assertionPtoM :: (Monad m) => (a -> Assertion m) -> m a -> Assertion m
 assertionPtoM pa actualM = do actual <- actualM
                               pa actual
