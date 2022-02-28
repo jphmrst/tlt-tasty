@@ -52,25 +52,25 @@ TLT provides these assertion operators:
 
 | Operator                       | Meaning                               |
 | ------------------------------ | ------------------------------------- |
-| `/expected/ @== /monadic/`     | The actual result must be equal to the given expected result.       |
-| `/expected/ @==- /expr/`       |                                       |
-| `/unexpected/ @\/= /monadic/`  | The actual result must differ from the given unexpected result.        |
-| `/unexpected/ @\/=- /expr/`    |                                       |
-| `/expected/ @< /monadic/`      | The actual result must be greater than the given lower bound.  |
-| `/expected/ @<- /expr/`        |                                       |
-| `/expected/ @    /monadic/`    | The actual result must be less than the given upper bound.        |
-| `/expected/ @>- /expr/`        |                                       |
-| `/expected/ @<= /monadic/`     | The actual result must be greater than or equal to the given lower bound.     |
-| `/expected/ @<=- /expr/`       |                                 |
-| `/expected/ @>= /monadic/`     | The actual result must be less than or equal to the given upper bound.   |
-| `/expected/ @>=- /expr/`       |                                       |
-| `empty /monadic/`              | The actual result must be an empty `Traversable` structure.    |
-| `emptyP /expr/`                |                                       |
-| `nonempty /monadic/`           | The actual result must be a nonempty `Traversable` structure.  |
-| `nonemptyP /expr/`             |                                       |
-| `nothing /monadic/`            | The actual result must be `Nothing` (in a `Maybe`-typed value)   |
-| `nothingP /expr/`              |                                       |
-| `assertFailed /message/`       | Trivial assertions, intended for the less interesting branches of conditional and selection expressions.  |
+| `expected @== monadic`     | The actual result must be equal to the given expected result.       |
+| `expected @==- expr`       |                                       |
+| `unexpected @/= monadic`  | The actual result must differ from the given unexpected result.        |
+| `unexpected @/=- expr`    |                                       |
+| `expected @< monadic`      | The actual result must be greater than the given lower bound.  |
+| `expected @<- expr`        |                                       |
+| `expected @    monadic`    | The actual result must be less than the given upper bound.        |
+| `expected @>- expr`        |                                       |
+| `expected @<= monadic`     | The actual result must be greater than or equal to the given lower bound.     |
+| `expected @<=- expr`       |                                 |
+| `expected @>= monadic`     | The actual result must be less than or equal to the given upper bound.   |
+| `expected @>=- expr`       |                                       |
+| `empty monadic`              | The actual result must be an empty `Traversable` structure.    |
+| `emptyP expr`                |                                       |
+| `nonempty monadic`           | The actual result must be a nonempty `Traversable` structure.  |
+| `nonemptyP expr`             |                                       |
+| `nothing monadic`            | The actual result must be `Nothing` (in a `Maybe`-typed value)   |
+| `nothingP expr`              |                                       |
+| `assertFailed message`       | Trivial assertions, intended for the less interesting branches of conditional and selection expressions.  |
 | `assertSuccess`                | |
 
 Note that although the assertions are in pairs of one for testing a
