@@ -5,7 +5,7 @@ cabal-version: 1.12
 -- see: https://github.com/sol/hpack
 
 name:           TLT
-version:        0.1.0.0
+version:        0.1.0.1
 synopsis:       Testing in monads and transformers without explicit specs
 description:    A small unit test system oriented with an emphasis on examining intermediate results of computations in monad transformers.  The Test.TLT Haddock page is the main piece of documentation; or see also the GitHub repository <https://github.com/jphmrst/TLT/>.
 category:       Test
@@ -36,7 +36,7 @@ library
       HUnit >=1.6.2 && <1.7
     , STMonadTrans >=0.4.6 && <0.5
     , ansi-terminal >=0.11.1 && <0.12
-    , base (>=4.14.3 && <4.15) || (>=4.15.1 && <4.16) || (>=4.16.0 && <4.17)
+    , base (>=4.14.1 && <4.15) || (>=4.15.1 && <4.16) || (>=4.16.0 && <4.17)
     , either >=5.0.1 && <5.1
     , free >=5.1.7 && <5.2
     , mtl >=2.2.2 && <2.3
@@ -57,7 +57,7 @@ executable TLT-exe
     , STMonadTrans >=0.4.6 && <0.5
     , TLT
     , ansi-terminal >=0.11.1 && <0.12
-    , base (>=4.14.3 && <4.15) || (>=4.15.1 && <4.16) || (>=4.16.0 && <4.17)
+    , base (>=4.14.1 && <4.15) || (>=4.15.1 && <4.16) || (>=4.16.0 && <4.17)
     , either >=5.0.1 && <5.1
     , free >=5.1.7 && <5.2
     , mtl >=2.2.2 && <2.3
@@ -79,7 +79,7 @@ test-suite TLT-test-fail
     , STMonadTrans >=0.4.6 && <0.5
     , TLT
     , ansi-terminal >=0.11.1 && <0.12
-    , base (>=4.14.3 && <4.15) || (>=4.15.1 && <4.16) || (>=4.16.0 && <4.17)
+    , base (>=4.14.1 && <4.15) || (>=4.15.1 && <4.16) || (>=4.16.0 && <4.17)
     , either >=5.0.1 && <5.1
     , free >=5.1.7 && <5.2
     , mtl >=2.2.2 && <2.3
