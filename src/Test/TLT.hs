@@ -70,6 +70,7 @@ import qualified Control.Monad.Trans.Writer.Lazy as WL
 import qualified Control.Monad.Trans.Writer.Strict as WS
 import System.Console.ANSI
 import System.Exit
+import qualified Test.Tasty.Providers as TTP
 
 -- * Results of tests
 
