@@ -7,6 +7,7 @@ Maintainer  : haskell-tlt@maraist.org
 Stability   : experimental
 Portability : POSIX
 
+This module allows TLT tests to be named and called from within Tasty.
 TLT is a small unit test system oriented towards examining
 intermediate results of computations in monad transformers.  It is
 intended to be lightweight for the programmer, and does not require
@@ -14,8 +15,8 @@ tests to be specified in some sort of formal list of tests.  Rather,
 tests are simply commands in a monad stack which includes the
 transformer layer @Test.TLT@.
 
-This Haddock page is the main piece of documentation; or see also the
-GitHub repository <https://github.com/jphmrst/TLT/>.
+See the @Test.TLT@ Haddock page or the GitHub repository
+<https://github.com/jphmrst/TLT/> for more information out TLT.
 
 -}
 
