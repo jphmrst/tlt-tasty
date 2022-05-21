@@ -30,7 +30,7 @@ See the @Test.TLT@ Haddock page or the GitHub repository
 -- For Tasty
 {-# LANGUAGE DeriveDataTypeable #-}
 
-module Test.TastyTLT () where
+module Test.TastyTLT (tltTest) where
 
 import Control.Monad.IO.Class
 import Data.Typeable
@@ -45,3 +45,6 @@ instance (Typeable m, MonadIO m) => TTP.IsTest (TLT m ()) where
 
   -- testOptions :: Tagged (TLT m ()) [OptionDescription]
   testOptions = error "TODO"
+
+tltTest :: String -> TLT IO () -> TTP.TestTree
+tltTest = TTP.singleTest

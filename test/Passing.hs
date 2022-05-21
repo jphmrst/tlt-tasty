@@ -1,15 +1,7 @@
 
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
-{-# LANGUAGE UndecidableInstances #-}
-
-import Data.Typeable
 import Test.TLT
 import Test.Tasty
-import Test.Tasty.Providers
 import Test.TastyTLT
-import Control.Monad.Trans.Identity
-import Control.Monad.Trans
 
 -- The next three definitions are taken from the example in the Tasty
 -- documentation, <https://hackage.haskell.org/package/tasty>.
@@ -17,8 +9,7 @@ main :: IO ()
 main = defaultMain tests
 
 tests :: TestTree
-tests = testGroup "TastyTLTTests" [singleTest "test" test]
-
+tests = testGroup "TastyTLTTests" [tltTest "test" test]
 
 test :: TLT IO ()
 test = do
