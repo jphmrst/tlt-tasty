@@ -35,7 +35,7 @@ module Test.TastyTLT (tltTest) where
 import Control.Monad.IO.Class
 import Data.Typeable
 import Data.Tagged
-import Test.TLT.Results (totalFailCount)
+import Test.TLT.Results (formatFail, totalFailCount)
 import Test.TLT.Class
 import qualified Test.Tasty.Providers as TTP
 
@@ -49,7 +49,7 @@ instance (Typeable m, TastyTLT m) => TTP.IsTest (TLT m ()) where
   run options tlt _ = do
     (optsOut, results) <- runOuter $ runTLT tlt
     return $ case totalFailCount results of
-      0 -> TTP.testPassed "TLT raised no errors"
+      0 -> TTP.testPassed ""
       _ -> TTP.testFailed
              (show (length results) ++ " errors found in TLT invocation")
 
