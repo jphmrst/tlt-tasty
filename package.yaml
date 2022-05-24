@@ -1,5 +1,5 @@
 name:           TastyTLT
-version:        0.1.0.0
+version:        0.0.0.0
 github:         "jphmrst/TLT-Tasty"
 license:        LGPL-3
 author:         "John Maraist"
@@ -23,7 +23,7 @@ dependencies:
 - mtl           >= 2.2.2  && < 2.3
 - TLT           >= 0.3.0  && < 0.4
 - tasty         >= 1.4.2  && < 1.5
-- tagged
+- tagged        >= 0.8.6  && < 0.8.7
 
 library:
   source-dirs: src
