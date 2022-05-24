@@ -34,17 +34,26 @@ module Test.TastyTLT (tltTest) where
 
 import Control.Monad.IO.Class
 import Data.Typeable
-import Test.TLT
+import Data.Tagged
+import Test.TLT.Results (totalFailCount)
+import Test.TLT.Class
 import qualified Test.Tasty.Providers as TTP
 
 -- * TLT integration
 
-instance (Typeable m, MonadIO m) => TTP.IsTest (TLT m ()) where
-  -- options :: Test.Tasty.Options.OptionSet, https://tinyurl.com/y5x2nenr
-  run options tlt _ = error "TODO"
+class MonadIO m => TastyTLT m where runOuter :: m a -> IO a
+instance TastyTLT IO where runOuter = id
 
-  -- testOptions :: Tagged (TLT m ()) [OptionDescription]
-  testOptions = error "TODO"
+instance (Typeable m, TastyTLT m) => TTP.IsTest (TLT m ()) where
+  -- options :: Test.Tasty.Options.OptionSet, https://tinyurl.com/y5x2nenr
+  run options tlt _ = do
+    (optsOut, results) <- runOuter $ runTLT tlt
+    return $ case totalFailCount results of
+      0 -> TTP.testPassed "TLT raised no errors"
+      _ -> TTP.testFailed
+             (show (length results) ++ " errors found in TLT invocation")
+
+  testOptions = return []
 
 tltTest :: String -> TLT IO () -> TTP.TestTree
 tltTest = TTP.singleTest

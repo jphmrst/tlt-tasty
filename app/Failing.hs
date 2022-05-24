@@ -1,8 +1,12 @@
 import Test.TLT
+import Test.Tasty
+import Test.TastyTLT
 
 main :: IO ()
-main = do
-  tlt test
+main = defaultMain tests
+
+tests :: TestTree
+tests = testGroup "TastyTLTTests" [tltTest "Failing test" test]
 
 test :: Monad m => TLT m ()
 test = do

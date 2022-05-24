@@ -42,7 +42,7 @@ packages:
 #
 # extra-deps: []
 extra-deps:
-- TLT-0.2.0.0@sha256:5fbd48ab98bf2e1663b2435babd72181cb1d88c1559faec4c65849c8aab12e04,2408
+- TLT-0.3.0.0@sha256:5c4fea0173df96a020294a61b4a7dd69089a5e722b405612eae5830e2d4670a0,2568
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

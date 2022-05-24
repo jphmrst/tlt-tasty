@@ -9,7 +9,7 @@ main :: IO ()
 main = defaultMain tests
 
 tests :: TestTree
-tests = testGroup "TastyTLTTests" [tltTest "test" test]
+tests = testGroup "TastyTLTTests" [tltTest "Passing test" test]
 
 test :: TLT IO ()
 test = do
