@@ -6,7 +6,7 @@ author:         "John Maraist"
 maintainer:     "haskell-tlt@maraist.org"
 copyright:      "2022 John Maraist"
 category:       Test
-synopsis:       "Allow TLT tests to be invoked from Tasty"
+synopsis:       "Run TLT tests from Tasty"
 description:    "TLT is a quick-and-dirty unit test system without test specifications, motivated by easy examination of intermediate results of computations in monad transformers.  See the GitHub repository <https://github.com/jphmrst/TLT/> for documentation, or the Haddock page for additional examples."
 
 extra-source-files:
