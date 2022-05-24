@@ -1,7 +1,7 @@
 
 import Test.TLT
 import Test.Tasty
-import Test.TastyTLT
+import Test.Tasty.TLT
 
 -- The next three definitions are taken from the example in the Tasty
 -- documentation, <https://hackage.haskell.org/package/tasty>.

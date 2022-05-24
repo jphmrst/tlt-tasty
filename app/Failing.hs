@@ -1,6 +1,6 @@
 import Test.TLT
 import Test.Tasty
-import Test.TastyTLT
+import Test.Tasty.TLT
 
 main :: IO ()
 main = defaultMain tests

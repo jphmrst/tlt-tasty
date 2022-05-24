@@ -27,7 +27,7 @@ source-repository head
 
 library
   exposed-modules:
-      Test.TastyTLT
+      Test.Tasty.TLT
   other-modules:
       Paths_TastyTLT
   hs-source-dirs:
